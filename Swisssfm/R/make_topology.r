@@ -15,7 +15,7 @@ make_topology <- function(
 	###############################################
 	# check inputs & defaults 	
 	len <- length(STP_id_next)
-	if(isFALSE(STP_id[1])) STP_id <- seq(len) else{ 
+	if(is.logical(STP_id[1]) & !isTRUE(STP_id[1])) STP_id <- seq(len) else{ 
 		if(length(STP_id) != len) stop("Problem in make_topology: STP_id_next and STP_id must be of same length") 
 		if(any(is.na(STP_id))) stop("Problem in make_topology: STP_id must not contain NAs") 
 	}
@@ -28,7 +28,7 @@ make_topology <- function(
 	for(i in 1:len) bin_link_matrix[i, STP_nr_next[i]] <- 1 	# NAs skipped
 	topo_matrix <- solve(diag(len) - bin_link_matrix)			# 0 or 1
 	colnames(topo_matrix) <- rownames(topo_matrix) <- STP_id
-	if(isTRUE(insert_id_in_topo_matrix)) for(i in ncol(topo_matrix)) topo_matrix[, i] <- topo_matrix[, i] * STP_id
+	if(isTRUE(insert_id_in_topo_matrix)) for(i in ncol(topo_matrix)) topo_matrix[, i] <- topo_matrix[, i] * as.numeric(STP_id) # inserts where 1
 	###############################################
 	return(topo_matrix) # columns mark upstream STPs of each STP
 	

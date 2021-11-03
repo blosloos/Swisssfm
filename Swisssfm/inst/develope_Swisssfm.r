@@ -29,7 +29,7 @@ install(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
 
 
 #################################################################################
-
+# WORK on ARA table 
 
 
 ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input.csv", header = TRUE, sep = ",")
@@ -79,7 +79,28 @@ write.csv(ARA, file = "D:/VSA/new_inputs/ARA_input_corrected.csv")
 
 ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",")
 
+ARA$ARANEXTNR %in% ARA[, 2]
 
+
+ARA_missing_ARANEXT <- ARA[!is.na(ARA$ARANEXTNR),][!(ARA$ARANEXTNR[!is.na(ARA$ARANEXTNR)] %in% ARA[, 2]),]
+
+
+
+
+
+ARA_missing_ARANEXT$ARANEXTNR %in% ARA[, 5] 
+
+
+
+
+
+write.csv(ARA_missing_ARANEXT, file = "D:/VSA/new_inputs/ARA_missing_ARANEXT.csv")
+
+
+#################################################################################
+# run
+
+ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
 
 
