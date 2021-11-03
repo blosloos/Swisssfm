@@ -39,7 +39,7 @@ run_daily_load <- function(
 	load_local <- load_local + STP_amount_hospital_beds * compound_load_per_hospital_bed_and_day * compound_excreted * compound_elimination_ara
 	load_cumulated <- apply(topo_matrix, MARGIN = 2, function(x){sum(x * load_local)}, y = load_local) 
 	###############################################
-	return(cbind(STP_id, lokal, load_cumulated) 
+	return(cbind(STP_id, load_local, load_cumulated))
 	
 }
 
