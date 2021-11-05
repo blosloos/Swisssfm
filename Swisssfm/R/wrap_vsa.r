@@ -1,38 +1,43 @@
 
 
-ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+if(FALSE){
 
-STP_id <- as.character(ARA$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
-STP_id_next <- as.character(ARA$ARANEXTNR)
-STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA$Eang_2021), fixed = TRUE))
+	ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+	ARA <- read.csv2(file = "E:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
-STP_discharge <- as.numeric(ARA$Q347I)
+	STP_id <- as.character(ARA$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
+	STP_id_next <- as.character(ARA$ARANEXTNR)
+	STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA$Eang_2021), fixed = TRUE))
 
-STP_discharge[STP_discharge > 0 & !is.na(STP_discharge)] <- mean(STP_discharge[STP_discharge > 0 & !is.na(STP_discharge)])
+	STP_discharge <- as.numeric(ARA$Q347I)
 
+	STP_discharge[STP_discharge < 0 | is.na(STP_discharge)] <- mean(STP_discharge[STP_discharge > 0 & !is.na(STP_discharge)])
 
+	compound_name <- "Diclofenac"
 
-compound_load_per_capita_and_day <- 540 * 1E-6 # Diclofenac
+	compound_load_per_capita_and_day <- 540 * 1E-6 # Diclofenac
 
-compound_elimination_ara <- matrix(ncol = 1, nrow = length(STP_id),  .9)
-compound_elimination_ara[ARA$MikroV %in% c("", "nicht vorhanden")] <- 0
+	compound_elimination_ara <- matrix(ncol = 1, nrow = length(STP_id),  .9)
+	compound_elimination_ara[ARA$MikroV %in% c("", "nicht vorhanden")] <- 0
 
-path_out_xlsx <- "D:/VSA/new_outputs/load_exports"
-overwrite <- TRUE
+	path_out_xlsx <- "D:/VSA/new_outputs/load_exports"
+	overwrite <- TRUE
 	
+}
 
 wrap_vsa <- function(
 	STP_id,
 	STP_id_next,
 	STP_amount_inhabitants,
-	STP_discharge
-	compound_names,
+	local_discharge,
+	STP_discharge,
+	compound_name,
 	compound_load_total = FALSE, 				# [kg / a]
 	compound_load_per_capita_and_day,			# [g / E d], set to FALSE to ignore
 	compound_load_per_hospital_bed_and_day = 0,	# [g / E d], set to FALSE to ignore
 	compound_elimination_ara,					# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
-	path_out_xlsx = FALSE,
+	path_out_xlsx = FALSE,						# if FALSE, return data.frame
 	overwrite = TRUE
 ){
 
@@ -53,7 +58,7 @@ wrap_vsa <- function(
 	)
 	###############################################
 	# calculate local and cumulative loads ########
-	ARA_loads <- run_daily_load(
+	result_table <- run_daily_load(
 
 		inhabitants_total = sum(STP_amount_inhabitants),
 		hospital_beds_total = FALSE,				# Set to FALSE to ignore
@@ -68,11 +73,22 @@ wrap_vsa <- function(
 		compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 		topo_matrix
 		
-	)
+	) # [g / d]
 	###############################################
 	# concentration
+	result_table <- cbind(result_table, 
+		"conc_local" = local_discharge * result_table$load_local,
+		"conc_cumulated" = local_discharge * result_table$load_cumulated
+	)
+	###############################################
+	# fraction STP discharge  
 
-STP_discharge
+
+
+
+
+
+
 
 
 
@@ -80,9 +96,22 @@ STP_discharge
 	###############################################
 	# format, export & return #####################
 	
-	is.logical(path_out_xlsx)
+	if(is.logical(path_out_xlsx)) return(result_table) else{
 	
-	return()
+		done_write <- try({
+		
+			
+		
+		
+		
+		})
+		if(class(done_write) == "try-error") stop("Export of results to path_out_xlsx failed. Is this path valid? Is the file open in another software?")
 	
+	}
 }
+
+
+
+
+
 

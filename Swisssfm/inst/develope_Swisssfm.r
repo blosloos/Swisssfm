@@ -13,11 +13,11 @@ package.skeleton(
 library(devtools)
 
 
-unload(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
-clean_dll(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
+unload(pkg = "D:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
+clean_dll(pkg = "D:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
 
-compile_dll(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm", quiet = FALSE)
-load_all(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
+compile_dll(pkg = "D:/PART_4/MS/R_packages/Swisssfm/Swisssfm", quiet = FALSE)
+load_all(pkg = "D:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
 
 
 
@@ -25,7 +25,7 @@ load_all(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
 
 library(devtools)
 
-install(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
+install(pkg = "D:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
 
 
 #################################################################################
