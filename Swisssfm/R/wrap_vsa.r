@@ -2,11 +2,11 @@
 
 if(FALSE){
 
-	ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
-	ARA <- read.csv2(file = "E:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+	ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE) # -> aus .xls in .csv umwandeln!
+	#ARA <- read.csv2(file = "E:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
-	STP_id <- as.character(ARA$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
-	STP_id_next <- as.character(ARA$ARANEXTNR)
+	#STP_id <- as.character(ARA$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
+	#STP_id_next <- as.character(ARA$ARANEXTNR)
 	STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA$Eang_2021), fixed = TRUE))
 
 	STP_discharge <- as.numeric(ARA$Q347I)
@@ -17,30 +17,77 @@ if(FALSE){
 
 	compound_load_per_capita_and_day <- 540 * 1E-6 # Diclofenac
 
+	compound_load_per_hospital_bed_and_day <- 0
+
 	compound_elimination_ara <- matrix(ncol = 1, nrow = length(STP_id),  .9)
 	compound_elimination_ara[ARA$MikroV %in% c("", "nicht vorhanden")] <- 0
 
 	path_out_xlsx <- "D:/VSA/new_outputs/load_exports"
 	overwrite <- TRUE
 	
+	ARA_table <- ARA
+	
+	STP_discharge_per_capita <- 400
+	
 }
 
 wrap_vsa <- function(
-	STP_id,
-	STP_id_next,
-	STP_amount_inhabitants,
-	local_discharge,
-	STP_discharge,
+
+	ARA_table = NULL,							# Must be a data.frame if provided, overwrites all of the below STP_ arguments
+	
+	STP_id = NULL,
+	STP_id_next = NULL,
+	STP_amount_inhabitants = NULL,
+	STP_local_discharge_river = NULL,			# discharge in river at STP
+	STP_discharge_per_capita = 400,				# [l / E d]
+	STP_amount_people_local = NULL,				# amount of people at STP
+	
 	compound_name,
 	compound_load_total = FALSE, 				# [kg / a]
 	compound_load_per_capita_and_day,			# [g / E d], set to FALSE to ignore
 	compound_load_per_hospital_bed_and_day = 0,	# [g / E d], set to FALSE to ignore
-	compound_elimination_ara,					# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
+	compound_elimination_ara = NULL,			# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
+	
 	path_out_xlsx = FALSE,						# if FALSE, return data.frame
 	overwrite = TRUE
+	
 ){
 
+	###############################################
+	# -> if available, get all inputs from ARA_table
+	if(!is.null(ARA_table) & !is.data.frame(ARA_table)) stop("ARA_table must be either NULL or a dataframe")
+	if(!is.null(ARA_table) & is.data.frame(ARA_table)){
+	
+		# all required columns available?
+		cols_required <- c("BAFU_Abgabehoehe_2021_kurz_2.ARANR", "ARANEXTNR", "Eang_2021", "Q347I", "MikroV", "EINWOHNER")
+		if(any(is.na(match(cols_required, names(ARA_table))))){
+			these_missing <- paste(cols_required[is.na(match(cols_required, names(ARA_table)))], collapse = ",")
+			stop(paste0("ARA_table is missing these columns: ", these_missing))
+		}
+	
+		# extract data from table
+		STP_id <- as.character(ARA_table$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
+		STP_id_next <- as.character(ARA_table$ARANEXTNR)
+		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA_table$Eang_2021), fixed = TRUE))
+		STP_local_discharge_river <- as.numeric(ARA_table$Q347I)
+		STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
+			mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
+		STP_amount_people_local <- ARA_table$EINWOHNER
+		
+		
+		
+	}else{
+	
+		if(is.null(STP_id)) stop("For ARA_table = NULL, STP_id must be provided as function argument.")
+		if(is.null(STP_id_next)) stop("For ARA_table = NULL, STP_id_next must be provided as function argument.")	
+		if(is.null(STP_amount_inhabitants)) stop("For ARA_table = NULL, STP_amount_inhabitants must be provided as function argument.")
+		if(is.null(STP_local_discharge_river)) stop("For ARA_table = NULL, STP_local_discharge_river must be provided as function argument.")
+		if(is.null(STP_amount_people_local)) stop("For ARA_table = NULL, STP_amount_people_local must be provided as function argument.")
+		
+		#if(is.null()) stop("For ARA_table = NULL,  must be provided as function argument.")
+	
+	}
 	###############################################
 	# check inputs & defaults #####################
 	if(!is.numeric(STP_amount_inhabitants)) stop("Problem in wrap_vsa: STP_amount_inhabitants must be numeric.")
@@ -53,7 +100,7 @@ wrap_vsa <- function(
 		STP_id_next = STP_id_next, 					# NA if none available
 		STP_id = STP_id,					
 		NA_next_ignore = FALSE,						# ara_id_next not in STP_id? -> set to NA as well
-		insert_id_in_topo_matrix = TRUE
+		insert_id_in_topo_matrix = FALSE
 	
 	)
 	###############################################
@@ -75,24 +122,22 @@ wrap_vsa <- function(
 		
 	) # [g / d]
 	###############################################
-	# concentration
+	# concentration ###############################
 	result_table <- cbind(result_table, 
-		"conc_local" = local_discharge * result_table$load_local,
-		"conc_cumulated" = local_discharge * result_table$load_cumulated
+		"conc_local" = STP_local_discharge_river * result_table$load_local,
+		"conc_cumulated" = STP_local_discharge_river * result_table$load_cumulated
 	)
 	###############################################
-	# fraction STP discharge  
-
-
-
-
-
-
-
-
-
-
-
+	# fraction STP discharge ######################
+	sewage_discharge_local <- STP_amount_people_local * STP_discharge_per_capita / 24 / 60 / 60 				# convert to [l/s]
+	STP_amount_people_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = STP_amount_people_local)
+	sewage_discharge_cumulated <- STP_amount_people_cumulated * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]
+	fract_STP_discharge_local <- STP_local_discharge_river / sewage_discharge_local
+	fract_STP_discharge_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated
+	result_table <- cbind(result_table, 
+		"fract_STP_discharge_local" = fract_STP_discharge_local,
+		"fract_STP_discharge_cumulated" = fract_STP_discharge_cumulated
+	)
 	###############################################
 	# format, export & return #####################
 	
