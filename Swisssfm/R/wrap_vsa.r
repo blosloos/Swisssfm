@@ -2,16 +2,16 @@
 
 if(FALSE){
 
-	ARA <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE) # -> aus .xls in .csv umwandeln!
+	ARA_table <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE) # -> aus .xls in .csv umwandeln!
 	#ARA <- read.csv2(file = "E:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
 	#STP_id <- as.character(ARA$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
 	#STP_id_next <- as.character(ARA$ARANEXTNR)
-	STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA$Eang_2021), fixed = TRUE))
+	#STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA$Eang_2021), fixed = TRUE))
 
-	STP_discharge <- as.numeric(ARA$Q347I)
+	#STP_discharge <- as.numeric(ARA$Q347I)
 
-	STP_discharge[STP_discharge < 0 | is.na(STP_discharge)] <- mean(STP_discharge[STP_discharge > 0 & !is.na(STP_discharge)])
+	#STP_discharge[STP_discharge < 0 | is.na(STP_discharge)] <- mean(STP_discharge[STP_discharge > 0 & !is.na(STP_discharge)])
 
 	compound_name <- "Diclofenac"
 
@@ -19,13 +19,12 @@ if(FALSE){
 
 	compound_load_per_hospital_bed_and_day <- 0
 
-	compound_elimination_ara <- matrix(ncol = 1, nrow = length(STP_id),  .9)
-	compound_elimination_ara[ARA$MikroV %in% c("", "nicht vorhanden")] <- 0
+	compound_elimination_STP <- matrix(ncol = 1, nrow = nrow(ARA_table),  .9)
+	compound_elimination_STP[ARA_table$MikroV %in% c("", "nicht vorhanden")] <- 0
 
-	path_out_xlsx <- "D:/VSA/new_outputs/load_exports"
+	path_out_xlsx <- "D:/VSA/new_outputs"
 	overwrite <- TRUE
 	
-	ARA_table <- ARA
 	
 	STP_discharge_per_capita <- 400
 	
@@ -46,9 +45,10 @@ wrap_vsa <- function(
 	compound_load_total = FALSE, 				# [kg / a]
 	compound_load_per_capita_and_day,			# [g / E d], set to FALSE to ignore
 	compound_load_per_hospital_bed_and_day = 0,	# [g / E d], set to FALSE to ignore
-	compound_elimination_ara = NULL,			# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
+	compound_elimination_STP = NULL,			# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 	
+	add_columns_from_ARA_table = c("ARANEXTNR", "LageX", "LageY"),
 	path_out_xlsx = FALSE,						# if FALSE, return data.frame
 	overwrite = TRUE
 	
@@ -116,7 +116,7 @@ wrap_vsa <- function(
 		compound_load_total = FALSE, 												# [kg / a]
 		compound_load_per_capita_and_day = compound_load_per_capita_and_day,		# [g / E d], set to FALSE to ignore
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day,
-		compound_elimination_ara,					# vector or STP-specific matrix with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
+		compound_elimination_STP,					# vector or STP-specific matrix with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 		compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 		topo_matrix
 		
@@ -139,20 +139,45 @@ wrap_vsa <- function(
 		"fract_STP_discharge_cumulated" = fract_STP_discharge_cumulated
 	)
 	###############################################
-	# format, export & return #####################
-	
+	# format, export & return #####################	
 	if(is.logical(path_out_xlsx)) return(result_table) else{
+		if(file.exists(path_out_xlsx) & !overwrite) stop("File at path_out_xlsx already exists, and overwrite is set to FALSE")
 	
+		# add more STP infos to result_table
+		use_cols <- match(add_columns_from_ARA_table, names(ARA_table))
+		use_rows <- match(ARA_table[, "BAFU_Abgabehoehe_2021_kurz_2.ARANR"], result_table[, "STP_ID"])
+		result_table <- cbind(
+			"STP_ID" = result_table[, "STP_ID"], 
+			ARA_table[use_rows, use_cols], 
+			result_table[, names(result_table) != "STP_ID"]
+		)
+		result_table <- rbind(
+			rep("", ncol(result_table)),
+			rep("", ncol(result_table)),
+			rep("", ncol(result_table)),
+			rep("", ncol(result_table)),
+			names(result_table),
+			result_table
+		)
+		names(result_table) <- NULL
+		result_table[2, 2] <- paste0("Compound name: ", compound_name)
+		#result_table[2, 4] <- compound_name
+		#result_table[3, 2] <- "Elimination:"
+		#result_table[3, 4] <- compound_elimination_STP	
 		done_write <- try({
 		
+			wb <- openxlsx:::createWorkbook()	
+			openxlsx:::addWorksheet(wb, compound_name)
+			openxlsx:::writeData(wb, compound_name, result_table, startCol = 2, startRow = 3, rowNames = FALSE)
 			
-		
-		
+			openxlsx:::saveWorkbook(wb, file = file.path(path_out_xlsx, paste0("STP_result_", compound_name, ".xlsx")), overwrite = TRUE)
 		
 		})
 		if(class(done_write) == "try-error") stop("Export of results to path_out_xlsx failed. Is this path valid? Is the file open in another software?")
 	
 	}
+	###############################################	
+	
 }
 
 
