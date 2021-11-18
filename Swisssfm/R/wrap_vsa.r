@@ -130,8 +130,9 @@ wrap_vsa <- function(
 	###############################################
 	# fraction STP discharge ######################
 	sewage_discharge_local <- STP_amount_people_local * STP_discharge_per_capita / 24 / 60 / 60 				# convert to [l/s]
-	STP_amount_people_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = STP_amount_people_local)
+	STP_amount_people_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local)
 	sewage_discharge_cumulated <- STP_amount_people_cumulated * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]
+	
 	fract_STP_discharge_local <- STP_local_discharge_river / sewage_discharge_local
 	fract_STP_discharge_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated
 	result_table <- cbind(result_table, 
@@ -169,6 +170,7 @@ wrap_vsa <- function(
 			wb <- openxlsx:::createWorkbook()	
 			openxlsx:::addWorksheet(wb, compound_name)
 			openxlsx:::writeData(wb, compound_name, result_table, startCol = 2, startRow = 3, rowNames = FALSE)
+			
 			
 			openxlsx:::saveWorkbook(wb, file = file.path(path_out_xlsx, paste0("STP_result_", compound_name, ".xlsx")), overwrite = TRUE)
 		
