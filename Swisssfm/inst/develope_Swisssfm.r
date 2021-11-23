@@ -28,7 +28,10 @@ load_all(pkg = "C:/PART_4/MS/R_packages/Swisssfm/Swisssfm")
 
 
 
-install_github("blosloos/Swisssfm/Swisssfm")
+library(devtools)
+
+install_github("blosloos/Swisssfm/Swisssfm/")
+
 
 
 library(devtools)
