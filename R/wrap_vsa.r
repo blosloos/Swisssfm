@@ -79,7 +79,7 @@ wrap_vsa <- function(
 	if(!is.null(ARA_table) & is.data.frame(ARA_table)){
 	
 		# all required columns available?
-		cols_required <- c("BAFU_Abgabehoehe_2021_kurz_2.ARANR", "ARANEXTNR", "Eang_2021", "Q347I", "MikroV", "Eang_2021")
+		cols_required <- c("BAFU_Abgabehoehe_2021_kurz_2.ARANR", "ARANEXTNR", "Eang_2021", "Q347_L_s_kleinster", "MikroV", "Eang_2021")
 		if(any(is.na(match(cols_required, names(ARA_table))))){
 			these_missing <- paste(cols_required[is.na(match(cols_required, names(ARA_table)))], collapse = ",")
 			stop(paste0("ARA_table is missing these columns: ", these_missing))
@@ -89,7 +89,7 @@ wrap_vsa <- function(
 		STP_id <- as.character(ARA_table$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
 		STP_id_next <- as.character(ARA_table$ARANEXTNR)
 		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA_table$Eang_2021), fixed = TRUE))
-		STP_local_discharge_river <- as.numeric(ARA_table$Q347I)
+		STP_local_discharge_river <- as.numeric(ARA_table$Q347_L_s_kleinster)
 		STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
 			mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
 		STP_amount_people_local <- ARA_table$Eang_2021
