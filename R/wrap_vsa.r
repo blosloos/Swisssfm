@@ -3,55 +3,38 @@
 if(FALSE){
 
 
-	xlsxFile_path <- "F:/VSA/new_inputs/Abgabe_Eang_unvalidierte_Kennzahlen_Rest_alle_v4.xlsx"
+	# define defaults for debugging:	
 
-	#wb <- loadWorkbook(file = xlsxFile_path, xlsxFile = NULL)
-
-	#getTables(wb, sheet = "groesser_200_Eang_q347_ARANExt")
+	STP_scenario_year = 2021
+	STP_reroute = TRUE
 	
-	ARA_table <- openxlsx:::read.xlsx(xlsxFile = xlsxFile_path, sheet = "groesser_200_Eang_q347_ARANExt")
+	STP_id = NULL
+	STP_id_next = NULL
+	STP_amount_inhabitants = NULL
+	STP_local_discharge_river = NULL					
+	STP_amount_people_local = NULL
 	
-	set_names <- ARA_table[2, ]
+	compound_load_total = FALSE
+
+	compound_load_per_hospital_bed_and_day = 0
+	compound_elimination_STP = NULL
+	compound_excreted = 1
 	
-	ARA_table <- ARA_table[-c(1, 2), ]
-	
-	names(ARA_table) <- set_names
- 
- 
+	add_columns_from_ARA_table = c("ARANEXTNR", "LageX", "LageY")
 
-	ARA_table <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE) # -> aus .xls in .csv umwandeln!
-	#ARA <- read.csv2(file = "E:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
-
-	#STP_id <- as.character(ARA$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
-	#STP_id_next <- as.character(ARA$ARANEXTNR)
-	#STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA$Eang_2021), fixed = TRUE))
-
-	#STP_discharge <- as.numeric(ARA$Q347I)
-
-	#STP_discharge[STP_discharge < 0 | is.na(STP_discharge)] <- mean(STP_discharge[STP_discharge > 0 & !is.na(STP_discharge)])
-
-	compound_name <- "Diclofenac"
-
-	compound_load_per_capita_and_day <- 540 * 1E-6 # Diclofenac
-
-	compound_load_per_hospital_bed_and_day <- 0
-
-	compound_elimination_STP <- matrix(ncol = 1, nrow = nrow(ARA_table),  .9)
-	compound_elimination_STP[ARA_table$MikroV %in% c("", "nicht vorhanden")] <- 0
-
-	path_out_xlsx <- "D:/VSA/new_outputs"
-	overwrite <- TRUE
-	
-	
-	STP_discharge_per_capita <- 400
-	
-	
-	
+	overwrite = TRUE	
+		
 }
+
+
+
 
 wrap_vsa <- function(
 
-	ARA_table = NULL,							# Must be a data.frame if provided, overwrites all of the below STP_ arguments
+	STP_table = NULL,							# Must be a data.frame if provided, overwrites all of the below STP_ arguments
+	
+	STP_scenario_year = 2021,
+	STP_reroute = TRUE,							# Reroute STPs at a given scenario_year
 	
 	STP_id = NULL,
 	STP_id_next = NULL,
@@ -67,42 +50,70 @@ wrap_vsa <- function(
 	compound_elimination_STP = NULL,			# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 	
-	add_columns_from_ARA_table = c("ARANEXTNR", "LageX", "LageY"),
+	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY"),
 	path_out_xlsx = FALSE,						# if FALSE, return data.frame
 	overwrite = TRUE
 	
 ){
 
 	###############################################
-	# -> if available, get all inputs from ARA_table
-	if(!is.null(ARA_table) & !is.data.frame(ARA_table)) stop("ARA_table must be either NULL or a dataframe")
-	if(!is.null(ARA_table) & is.data.frame(ARA_table)){
+	# -> if available, get all inputs from STP_table
+	if(!is.null(STP_table) & !is.data.frame(STP_table)) stop("STP_table must be either NULL or a dataframe")
+	if(!is.null(STP_table) & is.data.frame(STP_table)){
 	
 		# all required columns available?
-		cols_required <- c("BAFU_Abgabehoehe_2021_kurz_2.ARANR", "ARANEXTNR", "Eang_2021", "Q347_L_s_kleinster", "MikroV", "Eang_2021")
-		if(any(is.na(match(cols_required, names(ARA_table))))){
-			these_missing <- paste(cols_required[is.na(match(cols_required, names(ARA_table)))], collapse = ",")
-			stop(paste0("ARA_table is missing these columns: ", these_missing))
+		cols_required <- c(
+			"ARA_Nr", "ARANEXTNR", "angeschlossene_Einwohner_Abgabeliste2021", "Q347_L_s_kleinster", 
+			"Nitrifikation", "Denitrifikation", "P-Elimination", "Typ_MV-Behandlung", "Inbetriebnahme",
+			"ARA_Nr_Ziel_Umleitung"
+		)
+		if(any(is.na(match(cols_required, names(STP_table))))){
+			these_missing <- paste(cols_required[is.na(match(cols_required, names(STP_table)))], collapse = ",")
+			stop(paste0("STP_table is missing these columns: ", these_missing))
 		}
-	
+		
+		# reroute
+		if(STP_reroute){
+		
+			those <- which(
+				(STP_table[, "Typ_MV-Behandlung"] == "Umleitung") & 
+				(STP_scenario_year >= as.numeric(STP_table[, "Inbetriebnahme"]))
+			)
+			
+			for(i in those){ # rewrite angeschlossene_Einwohner_Abgabeliste2021
+			
+				to_STP <- STP_table[i, "ARA_Nr_Ziel_Umleitung"] 	# per ID
+				if(!(to_STP %in% STP_table$ARA_Nr)) stop(paste0("Invalid ARA_Nr_Ziel_Umleitung for STP ", STP_table[i, "ARA_Nr"]))
+				to_STP <- which(STP_table[, "ARA_Nr"] == to_STP) 	# per table position
+				if(!is.na(STP_table[to_STP, "ARA_Nr_Ziel_Umleitung"])) stop(paste0("Invalid ARA_Nr_Ziel_Umleitung for STP ", STP_table[i, "ARA_Nr"], ": rerouted STP is rerouted itself."))
+				has_STP_amount_people_local <- STP_table[i, "angeschlossene_Einwohner_Abgabeliste2021"]
+				STP_table[to_STP, "angeschlossene_Einwohner_Abgabeliste2021"] <- STP_table[to_STP, "angeschlossene_Einwohner_Abgabeliste2021"] + has_STP_amount_people_local
+			
+			}
+			
+			STP_table_relocated <- STP_table[those,, drop = FALSE]
+			STP_table <- STP_table[-those,, drop = FALSE]
+		
+		}
+		
 		# extract data from table
-		STP_id <- as.character(ARA_table$BAFU_Abgabehoehe_2021_kurz_2.ARANR)
-		STP_id_next <- as.character(ARA_table$ARANEXTNR)
-		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(ARA_table$Eang_2021), fixed = TRUE))
-		STP_local_discharge_river <- as.numeric(ARA_table$Q347_L_s_kleinster)
+		STP_id <- as.character(STP_table$ARA_Nr)
+		STP_id_next <- as.character(STP_table$ARANEXTNR)
+		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(STP_table$Eang_2021), fixed = TRUE))
+		STP_local_discharge_river <- as.numeric(STP_table$Q347_L_s_kleinster)
 		STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
 			mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
-		STP_amount_people_local <- ARA_table$Eang_2021
+		STP_amount_people_local <- STP_table$Eang_2021
 		
 	}else{
 	
-		if(is.null(STP_id)) stop("For ARA_table = NULL, STP_id must be provided as function argument.")
-		if(is.null(STP_id_next)) stop("For ARA_table = NULL, STP_id_next must be provided as function argument.")	
-		if(is.null(STP_amount_inhabitants)) stop("For ARA_table = NULL, STP_amount_inhabitants must be provided as function argument.")
-		if(is.null(STP_local_discharge_river)) stop("For ARA_table = NULL, STP_local_discharge_river must be provided as function argument.")
-		if(is.null(STP_amount_people_local)) stop("For ARA_table = NULL, STP_amount_people_local must be provided as function argument.")
+		if(is.null(STP_id)) stop("For STP_table = NULL, STP_id must be provided as function argument.")
+		if(is.null(STP_id_next)) stop("For STP_table = NULL, STP_id_next must be provided as function argument.")	
+		if(is.null(STP_amount_inhabitants)) stop("For STP_table = NULL, STP_amount_inhabitants must be provided as function argument.")
+		if(is.null(STP_local_discharge_river)) stop("For STP_table = NULL, STP_local_discharge_river must be provided as function argument.")
+		if(is.null(STP_amount_people_local)) stop("For STP_table = NULL, STP_amount_people_local must be provided as function argument.")
 		
-		#if(is.null()) stop("For ARA_table = NULL,  must be provided as function argument.")
+		#if(is.null()) stop("For STP_table = NULL,  must be provided as function argument.")
 	
 	}
 	###############################################
@@ -162,11 +173,11 @@ wrap_vsa <- function(
 		if(file.exists(path_out_xlsx) & !overwrite) stop("File at path_out_xlsx already exists, and overwrite is set to FALSE")
 	
 		# add more STP infos to result_table
-		use_cols <- match(add_columns_from_ARA_table, names(ARA_table))
-		use_rows <- match(ARA_table[, "BAFU_Abgabehoehe_2021_kurz_2.ARANR"], result_table[, "STP_ID"])
+		use_cols <- match(add_columns_from_STP_table, names(STP_table))
+		use_rows <- match(STP_table[, "ARA_Nr"], result_table[, "STP_ID"])
 		result_table <- cbind(
 			"STP_ID" = result_table[, "STP_ID"], 
-			ARA_table[use_rows, use_cols], 
+			STP_table[use_rows, use_cols], 
 			result_table[, names(result_table) != "STP_ID"]
 		)
 		result_table <- rbind(
