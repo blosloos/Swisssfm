@@ -3,6 +3,22 @@
 if(FALSE){
 
 
+	xlsxFile_path <- "F:/VSA/new_inputs/Abgabe_Eang_unvalidierte_Kennzahlen_Rest_alle_v4.xlsx"
+
+	#wb <- loadWorkbook(file = xlsxFile_path, xlsxFile = NULL)
+
+	#getTables(wb, sheet = "groesser_200_Eang_q347_ARANExt")
+	
+	ARA_table <- openxlsx:::read.xlsx(xlsxFile = xlsxFile_path, sheet = "groesser_200_Eang_q347_ARANExt")
+	
+	set_names <- ARA_table[2, ]
+	
+	ARA_table <- ARA_table[-c(1, 2), ]
+	
+	names(ARA_table) <- set_names
+ 
+ 
+
 	ARA_table <- read.csv2(file = "D:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE) # -> aus .xls in .csv umwandeln!
 	#ARA <- read.csv2(file = "E:/VSA/new_inputs/ARA_input_corrected.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
@@ -63,7 +79,7 @@ wrap_vsa <- function(
 	if(!is.null(ARA_table) & is.data.frame(ARA_table)){
 	
 		# all required columns available?
-		cols_required <- c("BAFU_Abgabehoehe_2021_kurz_2.ARANR", "ARANEXTNR", "Eang_2021", "Q347I", "MikroV", "EINWOHNER")
+		cols_required <- c("BAFU_Abgabehoehe_2021_kurz_2.ARANR", "ARANEXTNR", "Eang_2021", "Q347I", "MikroV", "Eang_2021")
 		if(any(is.na(match(cols_required, names(ARA_table))))){
 			these_missing <- paste(cols_required[is.na(match(cols_required, names(ARA_table)))], collapse = ",")
 			stop(paste0("ARA_table is missing these columns: ", these_missing))
@@ -76,9 +92,7 @@ wrap_vsa <- function(
 		STP_local_discharge_river <- as.numeric(ARA_table$Q347I)
 		STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
 			mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
-		STP_amount_people_local <- ARA_table$EINWOHNER
-		
-		
+		STP_amount_people_local <- ARA_table$Eang_2021
 		
 	}else{
 	
