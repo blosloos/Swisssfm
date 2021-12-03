@@ -34,7 +34,6 @@ run_daily_load <- function( # one function run per compound
 	if(any((compound_elimination_STP < 0) & (compound_elimination_STP > 1))) stop("Problem in run_daily_load: compound_elimination_STP not within [0,1]")
 
 	
-	
 	if(!all(STP_id %in% colnames(topo_matrix))) stop("Problem in run_daily_load: not all STP_id present in topo_matrix")
 	if(!all(colnames(topo_matrix) %in% STP_id)) stop("Problem in run_daily_load: not all topo_matrix entries present in STP_id")
 	if(is.logical(STP_fraction_hospital)) if(!isTRUE(STP_fraction_hospital)) STP_fraction_hospital <- rep(0, length(STP_id))
@@ -76,6 +75,9 @@ run_daily_load <- function( # one function run per compound
 	load_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = load_local)
 	inhabitants_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = STP_amount_inhabitants)
 	STP_count_cumulated <- apply(topo_matrix, MARGIN = 2, function(x){ sum(x) - 1 })
+	
+	
+	
 	###############################################
 	result <- data.frame(as.numeric(STP_id), as.numeric(load_local), as.numeric(load_cumulated), 
 		as.numeric(inhabitants_cumulated), as.numeric(STP_count_cumulated), row.names = NULL)
@@ -83,4 +85,17 @@ run_daily_load <- function( # one function run per compound
 	return(result)
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

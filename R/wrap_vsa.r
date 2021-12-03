@@ -20,9 +20,11 @@ if(FALSE){
 
 	compound_excreted = 1
 	
-	add_columns_from_ARA_table = c("ARANEXTNR", "LageX", "LageY")
+	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY")
 
 	overwrite = TRUE	
+	
+	STP_filter_steps = TRUE
 		
 }
 
@@ -149,6 +151,7 @@ wrap_vsa <- function(
 	###############################################
 	# calculate local and cumulative loads ########
 	
+	if(FALSE){
 	
 		inhabitants_total = sum(STP_amount_inhabitants)
 		hospital_beds_total = FALSE
@@ -161,7 +164,8 @@ wrap_vsa <- function(
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
 		compound_elimination_STP
 		compound_excreted = 1
-
+	
+	}
 	
 	
 	result_table <- run_daily_load(
@@ -201,6 +205,82 @@ wrap_vsa <- function(
 		"fract_STP_discharge_local" = fract_STP_discharge_local,
 		"fract_STP_discharge_cumulated" = fract_STP_discharge_cumulated
 	)
+	
+	
+	###############################################
+	# fraction sewage per upstream treatment step
+	
+	classed <- rep(NA, nrow(STP_treatment_steps))
+	classed[
+		(STP_treatment_steps[, "Nitrifikation"] == "Nein") & (STP_treatment_steps[, "Denitrifikation"] == "Nein") & is.na(STP_treatment_steps[, "Typ_MV-Behandlung"])
+	] <- "nur_C_Abbau"
+	classed[
+		(STP_treatment_steps[, "Nitrifikation"] == "Ja") & (STP_treatment_steps[, "Denitrifikation"] == "Nein") & is.na(STP_treatment_steps[, "Typ_MV-Behandlung"])
+	] <- "Nitrifikation"	
+	classed[
+		(STP_treatment_steps[, "Nitrifikation"] == "Ja") & (STP_treatment_steps[, "Denitrifikation"] == "Ja") & is.na(STP_treatment_steps[, "Typ_MV-Behandlung"])
+	] <- "Denitrifikation"		
+	classed[
+		!is.na(STP_treatment_steps[, "Typ_MV-Behandlung"])
+	] <- "MV_Behandlung"			
+	classed[is.na(classed)] <- "Sonstige"
+	
+	# nur_C_Abbau
+	STP_amount_people_local_classed <- STP_amount_people_local
+	STP_amount_people_local_classed[classed != "nur_C_Abbau"] <- 0
+	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
+	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
+	Fraction_nur_C_Abbau <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	
+	# Nitrifikation
+	STP_amount_people_local_classed <- STP_amount_people_local
+	STP_amount_people_local_classed[classed != "Nitrifikation"] <- 0
+	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
+	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
+	Fraction_Nitrifikation <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	
+	# Denitrifikation
+	STP_amount_people_local_classed <- STP_amount_people_local
+	STP_amount_people_local_classed[classed != "Denitrifikation"] <- 0
+	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
+	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
+	Fraction_Denitrifikation <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+
+	# MV_Behandlung
+	STP_amount_people_local_classed <- STP_amount_people_local
+	STP_amount_people_local_classed[classed != "MV_Behandlung"] <- 0
+	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
+	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
+	Fraction_MV_Behandlung <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	
+	# Sonstige
+	STP_amount_people_local_classed <- STP_amount_people_local
+	STP_amount_people_local_classed[classed != "Sonstige"] <- 0
+	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
+	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
+	Fraction_Sonstige <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	
+	#STP_treatment_steps[is.na(classed), ]
+	#STP_id[is.na(classed)]
+	
+	# -> Test: rowsum für Anteile muss 1 ergeben
+	if(FALSE) if(any(rowSums(cbind(
+			"Fraction_nur_C_Abbau" = Fraction_nur_C_Abbau,
+			"Fraction_Nitrifikation" = Fraction_Nitrifikation,
+			"Fraction_Denitrifikation" = Fraction_Denitrifikation,
+			"Fraction_MV_Behandlung" = Fraction_MV_Behandlung,
+			"Fraction_Sonstige" = Fraction_Sonstige
+		)) != 1)) stop("Missing treatment fractions in wrap_vsa - revise")
+	
+	result_table <- cbind(result_table, 
+		"Fraction_nur_C_Abbau" = Fraction_nur_C_Abbau,
+		"Fraction_Nitrifikation" = Fraction_Nitrifikation,
+		"Fraction_Denitrifikation" = Fraction_Denitrifikation,
+		"Fraction_MV_Behandlung" = Fraction_MV_Behandlung,
+		"Fraction_Sonstige" = Fraction_Sonstige
+	)
+	
+	
 	###############################################
 	# format, export & return #####################	
 	if(is.logical(path_out_xlsx)) return(result_table) else{
