@@ -167,15 +167,12 @@ wrap_vsa <- function(
 	
 	}
 	
-	
 	result_table <- run_daily_load(
 
 		inhabitants_total = sum(STP_amount_inhabitants),
 		hospital_beds_total = FALSE,				# Set to FALSE to ignore
 		STP_id = STP_id,
-		
 		STP_treatment_steps = STP_treatment_steps,
-		
 		STP_fraction_hospital = FALSE,
 		STP_amount_inhabitants = STP_amount_inhabitants,	
 		STP_amount_hospital_beds = FALSE,											# Set to FALSE to ignore
@@ -205,7 +202,6 @@ wrap_vsa <- function(
 		"fract_STP_discharge_local" = fract_STP_discharge_local,
 		"fract_STP_discharge_cumulated" = fract_STP_discharge_cumulated
 	)
-	
 	
 	###############################################
 	# fraction sewage per upstream treatment step
@@ -280,7 +276,6 @@ wrap_vsa <- function(
 		"Fraction_Sonstige" = Fraction_Sonstige
 	)
 	
-	
 	###############################################
 	# format, export & return #####################	
 	if(is.logical(path_out_xlsx)) return(result_table) else{
@@ -299,21 +294,40 @@ wrap_vsa <- function(
 			rep("", ncol(result_table)),
 			rep("", ncol(result_table)),
 			rep("", ncol(result_table)),
+			rep("", ncol(result_table)),
+			rep("", ncol(result_table)),
 			names(result_table),
 			result_table
 		)
 		names(result_table) <- NULL
-		result_table[2, 2] <- paste0("Compound name: ", compound_name)
-		#result_table[2, 4] <- compound_name
-		#result_table[3, 2] <- "Elimination:"
-		#result_table[3, 4] <- compound_elimination_STP	
+		
+		result_table[3, 2] <- "Compound name:"
+		result_table[4, 2] <- compound_name		
+		
+		result_table[3, 4] <- "Szenario Jahr:"
+		result_table[4, 4] <- STP_scenario_year
+		
+		result_table[2, 6] <- "Elimitationsraten" 
+		result_table[3, 6] <- "Nitrifikation:"	
+		result_table[4, 6] <- compound_elimination_STP$Nitrifikation		
+		result_table[3, 7] <- "Denitrifikation:"	
+		result_table[4, 7] <- compound_elimination_STP$Denitrifikation		
+		result_table[3, 8] <- "P_Elimination:"	
+		result_table[4, 8] <- compound_elimination_STP$P_Elimination
+		result_table[3, 9] <- "GAK:"	
+		result_table[4, 9] <- compound_elimination_STP$GAK
+		result_table[3, 10] <- "Kombi:"	
+		result_table[4, 10] <- compound_elimination_STP$Kombi
+		result_table[3, 11] <- "Ozonung:"	
+		result_table[4, 11] <- compound_elimination_STP$Ozonung
+		result_table[3, 12] <- "PAK:"	
+		result_table[4, 12] <- compound_elimination_STP$PAK			
+		
 		done_write <- try({
 		
 			wb <- openxlsx:::createWorkbook()	
 			openxlsx:::addWorksheet(wb, compound_name)
 			openxlsx:::writeData(wb, compound_name, result_table, startCol = 2, startRow = 3, rowNames = FALSE)
-			
-			
 			openxlsx:::saveWorkbook(wb, file = file.path(path_out_xlsx, paste0("STP_result_", compound_name, ".xlsx")), overwrite = TRUE)
 		
 		})
@@ -323,9 +337,6 @@ wrap_vsa <- function(
 	###############################################	
 	
 }
-
-
-
 
 
 
