@@ -323,6 +323,14 @@ wrap_vsa <- function(
 		result_table[3, 12] <- "PAK:"	
 		result_table[4, 12] <- compound_elimination_STP$PAK			
 		
+		result_table[2, 14] <- "Parameter" 		
+		result_table[3, 14] <- "Umleitung aktiv?"
+		result_table[4, 14] <- as.character(STP_reroute)
+		
+		result_table[3, 15] <- "Filterung treatment steps?"
+		result_table[4, 15] <- as.character(STP_filter_steps)
+		
+		
 		done_write <- try({
 		
 			wb <- openxlsx:::createWorkbook()	
