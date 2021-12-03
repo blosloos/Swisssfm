@@ -17,7 +17,7 @@ if(FALSE){
 	compound_load_total = FALSE
 
 	compound_load_per_hospital_bed_and_day = 0
-	compound_elimination_STP = NULL
+
 	compound_excreted = 1
 	
 	add_columns_from_ARA_table = c("ARANEXTNR", "LageX", "LageY")
@@ -34,12 +34,14 @@ wrap_vsa <- function(
 	STP_table = NULL,							# Must be a data.frame if provided, overwrites all of the below STP_ arguments
 	
 	STP_scenario_year = 2021,
-	STP_reroute = TRUE,							# Reroute STPs at a given scenario_year
+	STP_reroute = TRUE,							# Reroute STPs until a given STP_scenario_year
+	STP_filter_steps = TRUE,					# Filter STP treatment steps until a given STP_scenario_year
 	
 	STP_id = NULL,
 	STP_id_next = NULL,
 	STP_amount_inhabitants = NULL,
 	STP_local_discharge_river = NULL,			# discharge in river at STP
+	STP_treatment_steps = NULL,
 	STP_discharge_per_capita = 400,				# [l / E d]
 	STP_amount_people_local = NULL,				# amount of people at STP
 	
@@ -47,7 +49,7 @@ wrap_vsa <- function(
 	compound_load_total = FALSE, 				# [kg / a]
 	compound_load_per_capita_and_day,			# [g / E d], set to FALSE to ignore
 	compound_load_per_hospital_bed_and_day = 0,	# [g / E d], set to FALSE to ignore
-	compound_elimination_STP = NULL,			# vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
+	compound_elimination_STP = NULL,			# named dataframe or vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 	
 	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY"),
@@ -58,13 +60,14 @@ wrap_vsa <- function(
 
 	###############################################
 	# -> if available, get all inputs from STP_table
+	if(!is.numeric(STP_scenario_year)) stop("STP_scenario_year must be numeric")
 	if(!is.null(STP_table) & !is.data.frame(STP_table)) stop("STP_table must be either NULL or a dataframe")
 	if(!is.null(STP_table) & is.data.frame(STP_table)){
 	
 		# all required columns available?
 		cols_required <- c(
 			"ARA_Nr", "ARANEXTNR", "angeschlossene_Einwohner_Abgabeliste2021", "Q347_L_s_kleinster", 
-			"Nitrifikation", "Denitrifikation", "P-Elimination", "Typ_MV-Behandlung", "Inbetriebnahme",
+			"Nitrifikation", "Denitrifikation", "P_Elimination", "Typ_MV-Behandlung", "Inbetriebnahme",
 			"ARA_Nr_Ziel_Umleitung"
 		)
 		if(any(is.na(match(cols_required, names(STP_table))))){
@@ -77,39 +80,50 @@ wrap_vsa <- function(
 		
 			those <- which(
 				(STP_table[, "Typ_MV-Behandlung"] == "Umleitung") & 
-				(STP_scenario_year >= as.numeric(STP_table[, "Inbetriebnahme"]))
+				(as.numeric(STP_table[, "Inbetriebnahme"]) <= STP_scenario_year)
 			)
+			if(length(those)){
+				for(i in those){ # rewrite angeschlossene_Einwohner_Abgabeliste2021
+				
+					to_STP <- STP_table[i, "ARA_Nr_Ziel_Umleitung"] 	# per ID
+					if(!(to_STP %in% STP_table$ARA_Nr)) stop(paste0("Invalid ARA_Nr_Ziel_Umleitung for STP ", STP_table[i, "ARA_Nr"]))
+					to_STP <- which(STP_table[, "ARA_Nr"] == to_STP) 	# per table position
+					if(!is.na(STP_table[to_STP, "ARA_Nr_Ziel_Umleitung"])) stop(paste0("Invalid ARA_Nr_Ziel_Umleitung for STP ", STP_table[i, "ARA_Nr"], ": rerouted STP is rerouted itself."))
+					has_STP_amount_people_local <- STP_table[i, "angeschlossene_Einwohner_Abgabeliste2021"]
+					STP_table[to_STP, "angeschlossene_Einwohner_Abgabeliste2021"] <- STP_table[to_STP, "angeschlossene_Einwohner_Abgabeliste2021"] + has_STP_amount_people_local
+				
+				}
+				
+				STP_table_rerouted <- STP_table[those,, drop = FALSE]
+				STP_table <- STP_table[-those,, drop = FALSE]
 			
-			for(i in those){ # rewrite angeschlossene_Einwohner_Abgabeliste2021
-			
-				to_STP <- STP_table[i, "ARA_Nr_Ziel_Umleitung"] 	# per ID
-				if(!(to_STP %in% STP_table$ARA_Nr)) stop(paste0("Invalid ARA_Nr_Ziel_Umleitung for STP ", STP_table[i, "ARA_Nr"]))
-				to_STP <- which(STP_table[, "ARA_Nr"] == to_STP) 	# per table position
-				if(!is.na(STP_table[to_STP, "ARA_Nr_Ziel_Umleitung"])) stop(paste0("Invalid ARA_Nr_Ziel_Umleitung for STP ", STP_table[i, "ARA_Nr"], ": rerouted STP is rerouted itself."))
-				has_STP_amount_people_local <- STP_table[i, "angeschlossene_Einwohner_Abgabeliste2021"]
-				STP_table[to_STP, "angeschlossene_Einwohner_Abgabeliste2021"] <- STP_table[to_STP, "angeschlossene_Einwohner_Abgabeliste2021"] + has_STP_amount_people_local
-			
-			}
-			
-			STP_table_relocated <- STP_table[those,, drop = FALSE]
-			STP_table <- STP_table[-those,, drop = FALSE]
+			}else STP_table_rerouted <- NULL
 		
 		}
 		
 		# extract data from table
 		STP_id <- as.character(STP_table$ARA_Nr)
 		STP_id_next <- as.character(STP_table$ARANEXTNR)
-		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(STP_table$Eang_2021), fixed = TRUE))
+		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(STP_table$angeschlossene_Einwohner_Abgabeliste2021), fixed = TRUE))
 		STP_local_discharge_river <- as.numeric(STP_table$Q347_L_s_kleinster)
 		STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
 			mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
-		STP_amount_people_local <- STP_table$Eang_2021
+		STP_amount_people_local <- STP_table$angeschlossene_Einwohner_Abgabeliste2021
+		
+		# get & clean treatment steps
+		STP_treatment_steps <- STP_table[, c("Nitrifikation", "Denitrifikation", "P_Elimination", "Typ_MV-Behandlung", "Inbetriebnahme"), drop = FALSE]
+		STP_treatment_steps[is.na(STP_treatment_steps[, "Nitrifikation"]), "Nitrifikation"] <- "Nein"
+		STP_treatment_steps[is.na(STP_treatment_steps[, "Denitrifikation"]), "Denitrifikation"] <- "Nein"
+		STP_treatment_steps[is.na(STP_treatment_steps[, "P_Elimination"]), "P_Elimination"] <- "Nein"
+		STP_treatment_steps[STP_treatment_steps[, "Typ_MV-Behandlung"] %in% c("Umleitung", "Umleitung wahrscheinlich", "Ausbau"), "Typ_MV-Behandlung"] <- NA
+		if(STP_filter_steps) STP_treatment_steps[which(STP_treatment_steps[, "Inbetriebnahme"] > STP_scenario_year), "Typ_MV-Behandlung"] <- NA
 		
 	}else{
 	
 		if(is.null(STP_id)) stop("For STP_table = NULL, STP_id must be provided as function argument.")
 		if(is.null(STP_id_next)) stop("For STP_table = NULL, STP_id_next must be provided as function argument.")	
 		if(is.null(STP_amount_inhabitants)) stop("For STP_table = NULL, STP_amount_inhabitants must be provided as function argument.")
+		if(is.null(STP_treatment_steps)) stop("For STP_table = NULL, STP_treatment_steps must be provided as function argument.")
 		if(is.null(STP_local_discharge_river)) stop("For STP_table = NULL, STP_local_discharge_river must be provided as function argument.")
 		if(is.null(STP_amount_people_local)) stop("For STP_table = NULL, STP_amount_people_local must be provided as function argument.")
 		
@@ -131,13 +145,33 @@ wrap_vsa <- function(
 		insert_id_in_topo_matrix = FALSE
 	
 	)
+	if(!sum(topo_matrix)) stop("Problem in wrap_vsa: no relations between STPs found.")
 	###############################################
 	# calculate local and cumulative loads ########
+	
+	
+		inhabitants_total = sum(STP_amount_inhabitants)
+		hospital_beds_total = FALSE
+		STP_id = STP_id
+		STP_fraction_hospital = FALSE
+		STP_amount_inhabitants = STP_amount_inhabitants	
+		STP_amount_hospital_beds = FALSE
+		compound_load_total = FALSE
+		compound_load_per_capita_and_day = compound_load_per_capita_and_day
+		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
+		compound_elimination_STP
+		compound_excreted = 1
+
+	
+	
 	result_table <- run_daily_load(
 
 		inhabitants_total = sum(STP_amount_inhabitants),
 		hospital_beds_total = FALSE,				# Set to FALSE to ignore
 		STP_id = STP_id,
+		
+		STP_treatment_steps = STP_treatment_steps,
+		
 		STP_fraction_hospital = FALSE,
 		STP_amount_inhabitants = STP_amount_inhabitants,	
 		STP_amount_hospital_beds = FALSE,											# Set to FALSE to ignore
