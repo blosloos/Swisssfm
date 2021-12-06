@@ -49,14 +49,16 @@ wrap_vsa <- function(
 	
 	compound_name,
 	compound_load_total = FALSE, 				# [kg / a]
-	compound_load_per_capita_and_day,			# [g / E d], set to FALSE to ignore
+	compound_load_gramm_per_capita_and_day,		# [g / E d], set to FALSE to ignore
 	compound_load_per_hospital_bed_and_day = 0,	# [g / E d], set to FALSE to ignore
 	compound_elimination_STP = NULL,			# named dataframe or vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 	
 	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY"),
-	path_out_xlsx = FALSE,						# if FALSE, return data.frame
-	overwrite = TRUE
+	path_out = FALSE,							# if FALSE, return data.frame
+	overwrite = TRUE,
+	write_csv = TRUE,							# else, exports an excel file
+	use_sep_csv = " "
 	
 ){
 
@@ -136,7 +138,7 @@ wrap_vsa <- function(
 	# check inputs & defaults #####################
 	if(!is.numeric(STP_amount_inhabitants)) stop("Problem in wrap_vsa: STP_amount_inhabitants must be numeric.")
 	if(!identical(length(STP_id), length(STP_id_next), length(STP_amount_inhabitants))) stop("Problem in wrap_vsa: STP_id, STP_id_next and STP_amount_inhabitants must be of equal length.")
-	if(!overwrite & !is.logical(path_out_xlsx)) if(file.exists(path_out_xlsx)) stop("Problem in wrap_vsa: file at path_out_xlsx already exists; remove it or use overwrite = TRUE.")
+	if(!overwrite & !is.logical(path_out)) if(file.exists(path_out)) stop("Problem in wrap_vsa: file at path_out already exists; remove it or use overwrite = TRUE.")
 	###############################################
 	# calculate topology matrix ###################
 	topo_matrix <- make_topology(
@@ -160,7 +162,7 @@ wrap_vsa <- function(
 		STP_amount_inhabitants = STP_amount_inhabitants	
 		STP_amount_hospital_beds = FALSE
 		compound_load_total = FALSE
-		compound_load_per_capita_and_day = compound_load_per_capita_and_day
+		compound_load_gramm_per_capita_and_day = compound_load_gramm_per_capita_and_day
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
 		compound_elimination_STP
 		compound_excreted = 1
@@ -177,7 +179,7 @@ wrap_vsa <- function(
 		STP_amount_inhabitants = STP_amount_inhabitants,	
 		STP_amount_hospital_beds = FALSE,											# Set to FALSE to ignore
 		compound_load_total = FALSE, 												# [kg / a]
-		compound_load_per_capita_and_day = compound_load_per_capita_and_day,		# [g / E d], set to FALSE to ignore
+		compound_load_gramm_per_capita_and_day = compound_load_gramm_per_capita_and_day,		# [g / E d], set to FALSE to ignore
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day,
 		compound_elimination_STP,					# vector or STP-specific matrix with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 		compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
@@ -278,8 +280,8 @@ wrap_vsa <- function(
 	
 	###############################################
 	# format, export & return #####################	
-	if(is.logical(path_out_xlsx)) return(result_table) else{
-		if(file.exists(path_out_xlsx) & !overwrite) stop("File at path_out_xlsx already exists, and overwrite is set to FALSE")
+	if(is.logical(path_out)) return(result_table) else{
+		if(file.exists(path_out) & !overwrite) stop("File at path_out already exists, and overwrite is set to FALSE")
 	
 		# add more STP infos to result_table
 		use_cols <- match(add_columns_from_STP_table, names(STP_table))
@@ -330,16 +332,28 @@ wrap_vsa <- function(
 		result_table[3, 15] <- "Filterung treatment steps?"
 		result_table[4, 15] <- as.character(STP_filter_steps)
 		
+		if(write_csv){
 		
-		done_write <- try({
+			done_write <- try({
+			
+				write.table(result_table, file = file.path(path_out, paste0("STP_result_", compound_name, ".csv")), append = FALSE, quote = TRUE, sep = use_sep_csv)
+			
+			})
+			if(class(done_write) == "try-error") stop("Export of results to path_out.csv failed. Is this path valid? Is the file open in another software?")
 		
-			wb <- openxlsx:::createWorkbook()	
-			openxlsx:::addWorksheet(wb, compound_name)
-			openxlsx:::writeData(wb, compound_name, result_table, startCol = 2, startRow = 3, rowNames = FALSE)
-			openxlsx:::saveWorkbook(wb, file = file.path(path_out_xlsx, paste0("STP_result_", compound_name, ".xlsx")), overwrite = TRUE)
+		}else{
 		
-		})
-		if(class(done_write) == "try-error") stop("Export of results to path_out_xlsx failed. Is this path valid? Is the file open in another software?")
+			done_write <- try({
+			
+				wb <- openxlsx:::createWorkbook()	
+				openxlsx:::addWorksheet(wb, compound_name)
+				openxlsx:::writeData(wb, compound_name, result_table, startCol = 2, startRow = 3, rowNames = FALSE)
+				openxlsx:::saveWorkbook(wb, file = file.path(path_out, paste0("STP_result_", compound_name, ".xlsx")), overwrite = TRUE)
+			
+			})
+			if(class(done_write) == "try-error") stop("Export of results to path_out.xlsx failed. Is this path valid? Is the file open in another software?")
+	
+		}
 	
 	}
 	###############################################	
