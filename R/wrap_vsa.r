@@ -119,7 +119,7 @@ wrap_vsa <- function(
 		STP_treatment_steps[is.na(STP_treatment_steps[, "Nitrifikation"]), "Nitrifikation"] <- "Nein"
 		STP_treatment_steps[is.na(STP_treatment_steps[, "Denitrifikation"]), "Denitrifikation"] <- "Nein"
 		STP_treatment_steps[is.na(STP_treatment_steps[, "P_Elimination"]), "P_Elimination"] <- "Nein"
-		STP_treatment_steps[STP_treatment_steps[, "Typ_MV-Behandlung"] %in% c("Umleitung", "Umleitung wahrscheinlich", "Ausbau"), "Typ_MV-Behandlung"] <- NA
+		STP_treatment_steps[STP_treatment_steps[, "Typ_MV-Behandlung"] %in% c("Umleitung", "Umleitung wahrscheinlich"), "Typ_MV-Behandlung"] <- NA
 		if(STP_filter_steps) STP_treatment_steps[which(STP_treatment_steps[, "Inbetriebnahme"] > STP_scenario_year), "Typ_MV-Behandlung"] <- NA
 		
 	}else{
@@ -323,14 +323,16 @@ wrap_vsa <- function(
 		result_table[3, 11] <- "Ozonung:"	
 		result_table[4, 11] <- compound_elimination_STP$Ozonung
 		result_table[3, 12] <- "PAK:"	
-		result_table[4, 12] <- compound_elimination_STP$PAK			
+		result_table[4, 12] <- compound_elimination_STP$PAK		
+		result_table[3, 13] <- "Ausbau:"	
+		result_table[4, 13] <- compound_elimination_STP$Ausbau	
 		
-		result_table[2, 14] <- "Parameter" 		
-		result_table[3, 14] <- "Umleitung aktiv?"
-		result_table[4, 14] <- as.character(STP_reroute)
+		result_table[2, 15] <- "Parameter" 		
+		result_table[3, 15] <- "Umleitung aktiv?"
+		result_table[4, 15] <- as.character(STP_reroute)
 		
-		result_table[3, 15] <- "Filterung treatment steps?"
-		result_table[4, 15] <- as.character(STP_filter_steps)
+		result_table[3, 16] <- "Filterung treatment steps?"
+		result_table[4, 16] <- as.character(STP_filter_steps)
 		
 		if(!file.exists(path_out)) dir.create(path = path_out)
 		

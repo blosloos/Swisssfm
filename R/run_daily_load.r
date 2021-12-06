@@ -28,7 +28,7 @@ run_daily_load <- function( # one function run per compound
 	
 	if(!is.data.frame(compound_elimination_STP) & is.vector(compound_elimination_STP)) stop("Problem in wrap_vsa, argument compound_elimination_STP is not a dataframe.")
 	if(any(!sapply(compound_elimination_STP, is.numeric))) stop("Problem in wrap_vsa, dataframe compound_elimination_STP has non-numeric entries.")
-	STP_steps <- c("Nitrifikation", "Denitrifikation", "P_Elimination", "GAK", "Kombi", "Ozonung", "PAK")
+	STP_steps <- c("Nitrifikation", "Denitrifikation", "P_Elimination", "GAK", "Kombi", "Ozonung", "PAK", "Ausbau")
 	not_found <- !(STP_steps %in% names(compound_elimination_STP))
 	if(any(not_found)) stop("Problem in wrap_vsa, argument compound_elimination_STP: entry ", compound_elimination_STP[not_found], " is missing.")
 	if(any((compound_elimination_STP < 0) & (compound_elimination_STP > 1))) stop("Problem in run_daily_load: compound_elimination_STP not within [0,1]")
