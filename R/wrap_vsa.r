@@ -332,6 +332,8 @@ wrap_vsa <- function(
 		result_table[3, 15] <- "Filterung treatment steps?"
 		result_table[4, 15] <- as.character(STP_filter_steps)
 		
+		if(!file.exists(path_out)) dir.create(path = path_out)
+		
 		if(write_csv){
 		
 			done_write <- try({
