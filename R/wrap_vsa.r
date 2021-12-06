@@ -336,7 +336,7 @@ wrap_vsa <- function(
 		
 			done_write <- try({
 			
-				write.table(result_table, file = file.path(path_out, paste0("STP_result_", compound_name, ".csv")), append = FALSE, quote = TRUE, sep = use_sep_csv)
+				write.table(result_table, file = file.path(path_out, paste0("STP_result_", compound_name, ".csv")), append = FALSE, quote = TRUE, sep = use_sep_csv, row.names = FALSE)
 			
 			})
 			if(class(done_write) == "try-error") stop("Export of results to path_out.csv failed. Is this path valid? Is the file open in another software?")
