@@ -117,6 +117,14 @@ wrap_vsa <- function(
 			mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
 		STP_amount_people_local <- STP_table$angeschlossene_Einwohner_Abgabeliste2021
 		
+		# check: Umleitung affects any ARA_Nr_nach_See?
+		if(with_lake_elimination){
+			ARA_Nr_nach_See <- c(664301, 296400, 645700, 102400, 94400, 59300, 26101, 160200, 73300, 110400, 420800, 140100, 19301)
+			Umleitung <- STP_table[, "Typ_MV-Behandlung"] == "Umleitung"
+			Umleitung[is.na(Umleitung)] <- "FALSE" 
+			if(ARA_Nr_nach_See %in% STP_table$ARA_Nr[as.logical(Umleitung)]) stop("ARA_Nr_nach_See affected by Umleitung - this must not be the case for.")
+		}
+		
 		# get & clean treatment steps
 		STP_treatment_steps <- STP_table[, c("Nitrifikation", "Denitrifikation", "P_Elimination", "Typ_MV-Behandlung", "Inbetriebnahme"), drop = FALSE]
 		STP_treatment_steps[is.na(STP_treatment_steps[, "Nitrifikation"]), "Nitrifikation"] <- "Nein"
@@ -195,8 +203,8 @@ wrap_vsa <- function(
 	###############################################
 	# concentration ###############################
 	result_table <- cbind(result_table, 
-		"conc_local" = STP_local_discharge_river * result_table$load_local,
-		"conc_cumulated" = STP_local_discharge_river * result_table$load_cumulated
+		"conc_local_ng_L" =  (result_table$load_local / (24 * 60 * 60)) / (STP_local_discharge_river * 1E9), 		# ng / L  , load: g/s  discharge: Q347_L_s_kleinster
+		"conc_cumulated_ng_L" = (result_table$load_cumulated / (24 * 60 * 60)) / (STP_local_discharge_river * 1E9)
 	)
 	###############################################
 	# fraction STP discharge ######################
@@ -310,35 +318,43 @@ wrap_vsa <- function(
 		names(result_table) <- NULL
 		
 		result_table[3, 2] <- "Compound name:"
-		result_table[4, 2] <- compound_name		
+		result_table[4, 2] <- compound_name	
 		
-		result_table[3, 4] <- "Szenario Jahr:"
-		result_table[4, 4] <- STP_scenario_year
+		result_table[3, 3] <- "Compound load [g / E d]):"
+		result_table[4, 4] <- compound_load_gramm_per_capita_and_day			
 		
-		result_table[2, 6] <- "Elimitationsraten" 
-		result_table[3, 6] <- "Nitrifikation:"	
-		result_table[4, 6] <- compound_elimination_STP$Nitrifikation		
-		result_table[3, 7] <- "Denitrifikation:"	
-		result_table[4, 7] <- compound_elimination_STP$Denitrifikation		
-		result_table[3, 8] <- "P_Elimination:"	
-		result_table[4, 8] <- compound_elimination_STP$P_Elimination
-		result_table[3, 9] <- "GAK:"	
-		result_table[4, 9] <- compound_elimination_STP$GAK
-		result_table[3, 10] <- "Kombi:"	
-		result_table[4, 10] <- compound_elimination_STP$Kombi
-		result_table[3, 11] <- "Ozonung:"	
-		result_table[4, 11] <- compound_elimination_STP$Ozonung
-		result_table[3, 12] <- "PAK:"	
-		result_table[4, 12] <- compound_elimination_STP$PAK		
-		result_table[3, 13] <- "Ausbau:"	
-		result_table[4, 13] <- compound_elimination_STP$Ausbau	
 		
-		result_table[2, 15] <- "Parameter" 		
-		result_table[3, 15] <- "Umleitung aktiv?"
-		result_table[4, 15] <- as.character(STP_reroute)
+		result_table[3, 5] <- "Szenario Jahr:"
+		result_table[4, 5] <- STP_scenario_year
 		
-		result_table[3, 16] <- "Filterung treatment steps?"
-		result_table[4, 16] <- as.character(STP_filter_steps)
+		result_table[2, 7] <- "Elimitationsraten" 
+		result_table[3, 7] <- "Nitrifikation:"	
+		result_table[4, 7] <- compound_elimination_STP$Nitrifikation		
+		result_table[3, 8] <- "Denitrifikation:"	
+		result_table[4, 8] <- compound_elimination_STP$Denitrifikation		
+		result_table[3, 9] <- "P_Elimination:"	
+		result_table[4, 9] <- compound_elimination_STP$P_Elimination
+		result_table[3, 10] <- "GAK:"	
+		result_table[4, 10] <- compound_elimination_STP$GAK
+		result_table[3, 11] <- "Kombi:"	
+		result_table[4, 11] <- compound_elimination_STP$Kombi
+		result_table[3, 12] <- "Ozonung:"	
+		result_table[4, 12] <- compound_elimination_STP$Ozonung
+		result_table[3, 13] <- "PAK:"	
+		result_table[4, 13] <- compound_elimination_STP$PAK		
+		result_table[3, 14] <- "Ausbau:"	
+		result_table[4, 14] <- compound_elimination_STP$Ausbau	
+		
+		result_table[2, 16] <- "Parameter" 		
+		result_table[3, 16] <- "Umleitung aktiv?"
+		result_table[4, 16] <- as.character(STP_reroute)
+		
+		result_table[3, 17] <- "Filterung treatment steps?"
+		result_table[4, 17] <- as.character(STP_filter_steps)
+		
+		result_table[3, 18] <- "Elimination Seen aktiv?"
+		result_table[4, 18] <- as.character(with_lake_elimination)		
+		
 		
 		if(!file.exists(path_out)) dir.create(path = path_out)
 		

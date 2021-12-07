@@ -86,33 +86,19 @@ run_daily_load <- function( # one function run per compound
 		
 		ARA_Nr_nach_See <- c(664301, 296400, 645700, 102400, 94400, 59300, 26101, 160200, 73300, 110400, 420800, 140100, 19301)
 		
-		
-		73300
-		
-		
-		19301
-		
-		
-		
-		Umleitung <- STP_table[, "Typ_MV-Behandlung"] == "Umleitung"
-		
-		Umleitung[is.na(Umleitung)] <- "FALSE" 
-		
-		
-		ARA_Nr_nach_See %in% STP_table$ARA_Nr[as.logical(Umleitung)]
-		
-		
-		
+		if(any(colnames(topo_matrix) != rownames(topo_matrix))) stop("topo_matrix must be symmetric")
 		
 		for(n in 1:ncol(topo_matrix)){
 	
-			if(rownames(topo_matrix)[n] == "26102") stop()
+			
 	
 			those <- which(rownames(topo_matrix)[topo_matrix[, n] != 0] %in% ARA_Nr_nach_See)
 			if(length(those)){ 
 			
-			#	if(length(those) > 1) stop() 
-			
+				those <- those[order(colSums(topo_matrix[, those] != 0), decreasing = FALSE)] # if(length(those) > 1)
+				
+				get_STPs <- vector("list", length(those) + 1)
+				
 				
 			
 			
