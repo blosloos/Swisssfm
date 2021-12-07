@@ -39,9 +39,12 @@ sfmplot <- function(){
 
 						navbarPage("Plot options",
 							tabPanel("Hide", HTML('<hr noshade="noshade" />')),
-							tabPanel("A", HTML('<br><br>')),
-							tabPanel("B", HTML('<br><br>')),
-							tabPanel("C", HTML('<br><br>'))							
+							tabPanel("STP", HTML('<br><br>')),
+							tabPanel("Add", 
+								selectInput("add_plot", "Add to plot:", "Link each STP to its ARANEXT", selected = NULL, multiple = TRUE,
+									selectize = TRUE, width = NULL, size = NULL)
+							
+							)							
 						),
 						
 						
@@ -53,7 +56,7 @@ sfmplot <- function(){
 								id = "STP_plane_brush",
 								resetOnNew = TRUE,
 								delay = 0
-							),                
+							),
 							height = "700px",
 							width  = "1300px"
 						),					
@@ -82,6 +85,12 @@ sfmplot <- function(){
 			plot_lim$xlim <- NULL
 			plot_lim$ylim <- NULL
 
+			if(any(objects(envir = as.environment(".GlobalEnv")) == "STP_table")) rm("STP_table", envir = as.environment(".GlobalEnv"))
+
+
+#fliess <- read.shapefile("F:/VSA/topo/swissTLM3D_TLM_FLIESSGEWAESSER")
+
+
 			##############################################################################
 			observe({
 				input$open_path_in
@@ -97,8 +106,6 @@ sfmplot <- function(){
 							read.csv(file = path_in, sep = isolate(input$csv_sep), stringsAsFactors = FALSE)
 						})
 					}
-					
-#STP_table <<- STP_table					
 					
 					if(class(STP_table) == "try-error"){
 						shinyalert("Warning", STP_table[[1]], type = "error")
@@ -117,6 +124,9 @@ sfmplot <- function(){
 							STP_table <- STP_table[7:nrow(STP_table),, drop = FALSE]
 							STP_table$LageX <- as.numeric(STP_table$LageX)
 							STP_table$LageY <- as.numeric(STP_table$LageY)
+							
+							STP_table <<- STP_table
+
 							##############################################################			
 							output$STP_plane <- renderPlot({
 
@@ -124,7 +134,9 @@ sfmplot <- function(){
 								plot.window(xlim = range(STP_table$LageX), ylim = range(STP_table$LageY))
 								points(STP_table$LageX, STP_table$LageY, pch = 19, col = "black")
 
-cat("\nI AM IN HERE_0")
+
+
+								box(col = "darkgrey")
 
 							})
 							##############################################################
@@ -154,21 +166,16 @@ cat("\nI AM IN HERE_0")
 					plot_lim$xlim <- NULL
 					plot_lim$ylim <- NULL
 				}
-			
-print(isolate(plot_lim$xlim))
-print(isolate(plot_lim$ylim))
-
-cat("\nI AM IN HERE_1")
 				
 			}, ignoreInit = TRUE)
 							
 			##############################################################################				
 			observe({		
 			
-				plot_lim$xlim
-				#plot_lim$ylim
+				plot_lim$xlim #plot_lim$ylim
+				input$add_plot
 				
-				if(isolate(input$open_path_in_xls)){
+				if(any(objects(envir = as.environment(".GlobalEnv")) == "STP_table")){
 					
 					output$STP_plane <- renderPlot({
 					
@@ -176,22 +183,38 @@ cat("\nI AM IN HERE_1")
 						if(is.null(isolate(plot_lim$xlim))) x_lim <- range(STP_table$LageX) else x_lim <- isolate(plot_lim$xlim)
 						if(is.null(isolate(plot_lim$ylim))) y_lim <- range(STP_table$LageY) else y_lim <- isolate(plot_lim$ylim)				
 						
-print(x_lim)
-print(y_lim)
-cat("\nI AM IN HERE_2")
-						
 						plot.new()
 						plot.window(xlim = x_lim, ylim = y_lim)
+						##################################################################
+						if("Link each STP to its ARANEXT" %in% isolate(input$add_plot)){
+
+cat("\n AM LINKING STPs")
+							for(i in 1:nrow(STP_table)){
+
+								if(is.na(STP_table[i, "ARANEXTNR"])) next
+								
+								to <- which(STP_table$STP_ID == STP_table[i, "ARANEXTNR"])
+								
+								lines(c(STP_table$LageX[i], STP_table$LageX[to]), c(STP_table$LageY[i], STP_table$LageY[to]))
+								
+
+
+							}
+
+						}
+						##################################################################						
+
 						points(STP_table$LageX, STP_table$LageY, pch = 19, col = "black")
 
+						##################################################################						
+						box(col = "darkgrey")
+						#axis(1);axis(2)
 
 
 					})
 					
-				}
+				}else cat("\nSTP_table not yet loaded")
 
-
-				
 			})				
 			##############################################################################	
 
