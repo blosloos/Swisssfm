@@ -167,7 +167,6 @@ wrap_vsa <- function(
 		compound_load_total = FALSE
 		compound_load_gramm_per_capita_and_day = compound_load_gramm_per_capita_and_day
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
-		compound_elimination_STP
 		compound_excreted = 1
 	
 	}
