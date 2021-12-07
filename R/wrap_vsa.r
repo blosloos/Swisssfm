@@ -195,7 +195,7 @@ wrap_vsa <- function(
 		compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 		
 		with_lake_elimination = with_lake_elimination,
-		lake_eliminination_rates = lake_eliminination_rates,		
+		lake_eliminination_rate = lake_eliminination_rates,		
 		
 		topo_matrix
 		
@@ -212,13 +212,18 @@ wrap_vsa <- function(
 	STP_amount_people_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local)
 	sewage_discharge_cumulated <- STP_amount_people_cumulated * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]
 	
-	fract_STP_discharge_local <- STP_local_discharge_river / sewage_discharge_local
-	fract_STP_discharge_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated
-	result_table <- cbind(result_table, 
-		"fract_STP_discharge_local" = fract_STP_discharge_local,
-		"fract_STP_discharge_cumulated" = fract_STP_discharge_cumulated
-	)
+	Discharge_ratio_river_to_STP_local <- STP_local_discharge_river / sewage_discharge_local
+	Discharge_ratio_river_to_STP_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated
 	
+	Fraction_STP_discharge_of_river_local <- sewage_discharge_local / ( STP_local_discharge_river + sewage_discharge_local)
+	Fraction_STP_discharge_of_river_cumulated <- sewage_discharge_cumulated / ( STP_local_discharge_river + sewage_discharge_local)	
+	
+	result_table <- cbind(result_table, 
+		"Discharge_ratio_river_to_STP_local" = Discharge_ratio_river_to_STP_local,
+		"Discharge_ratio_river_to_STP_cumulated" = Discharge_ratio_river_to_STP_cumulated,
+		"Fraction_STP_discharge_of_river_local" = Fraction_STP_discharge_of_river_local,
+		"Fraction_STP_discharge_of_river_cumulated" = Fraction_STP_discharge_of_river_cumulated
+	)
 	###############################################
 	# fraction sewage per upstream treatment step
 	

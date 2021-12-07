@@ -21,7 +21,7 @@ run_daily_load <- function( # one function run per compound
 	compound_excreted = 1,							# fraction excreted and discharged, set to 1 to ignore
 	
 	with_lake_elimination = FALSE,
-	lake_eliminination_rates = 0.25,
+	lake_eliminination_rate = 0.25,
 	
 	topo_matrix
 	
@@ -92,14 +92,25 @@ run_daily_load <- function( # one function run per compound
 	
 			
 	
-			those <- which(rownames(topo_matrix)[topo_matrix[, n] != 0] %in% ARA_Nr_nach_See)
+			has_ARA_nach_See <- rownames(topo_matrix)[topo_matrix[, n] != 0][rownames(topo_matrix)[topo_matrix[, n] != 0] %in% ARA_Nr_nach_See]
+			
+			those <- which(rownames(topo_matrix) %in% has_ARA_nach_See)
+			
 			if(length(those)){ 
 			
-				those <- those[order(colSums(topo_matrix[, those] != 0), decreasing = FALSE)] # if(length(those) > 1)
+				those <- those[order(colSums(topo_matrix[, those, drop = FALSE] != 0), decreasing = FALSE)] # if(length(those) > 1)
 				
-				get_STPs <- vector("list", length(those) + 1)
+				those <- c(those, n)	# -> INDEX in matrix
 				
+				done_STPs <- c()		# -> ARA Nr
 				
+				lake_eliminination_rate
+				
+				for(m in those){
+				
+					done_STPs <- unique(c(done_STPs, rownames(topo_matrix)[topo_matrix[, m] != 0]))
+				
+				}
 			
 			
 			}
