@@ -203,8 +203,8 @@ wrap_vsa <- function(
 	###############################################
 	# concentration ###############################
 	result_table <- cbind(result_table, 
-		"conc_local_ng_L" =  (result_table$load_local / (24 * 60 * 60)) / (STP_local_discharge_river * 1E9), 		# ng / L  , load: g/s  discharge: Q347_L_s_kleinster
-		"conc_cumulated_ng_L" = (result_table$load_cumulated / (24 * 60 * 60)) / (STP_local_discharge_river * 1E9)
+		"conc_local_ng_L" =  (result_table$load_local / (24 * 60 * 60)) * 1E9 / STP_local_discharge_river, 			# ng / L  , load: g/d  discharge: Q347_L_s_kleinster
+		"conc_cumulated_ng_L" = (result_table$load_cumulated / (24 * 60 * 60)) * 1E9 / STP_local_discharge_river
 	)
 	###############################################
 	# fraction STP discharge ######################

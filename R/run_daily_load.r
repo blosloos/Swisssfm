@@ -73,16 +73,16 @@ run_daily_load <- function( # one function run per compound
 		
 	}
 	if(!(length(compound_elimination_STP_calc) %in% c(1, length(STP_id)))) stop("Problem in run_daily_load: invalid length for compound_elimination_STP_calc.")
-	load_local <- STP_amount_inhabitants * compound_load_gramm_per_capita_and_day * compound_excreted * compound_elimination_STP_calc
-	load_local <- load_local + STP_amount_hospital_beds * compound_load_per_hospital_bed_and_day * compound_excreted * compound_elimination_STP_calc
+	load_local_g_d <- STP_amount_inhabitants * compound_load_gramm_per_capita_and_day * compound_excreted * compound_elimination_STP_calc
+	load_local_g_d <- load_local_g_d + STP_amount_hospital_beds * compound_load_per_hospital_bed_and_day * compound_excreted * compound_elimination_STP_calc
 	
 	if(!with_lake_elimination){
 	
-		load_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = load_local) # MARGIN = 2 -> iterates over columns
+		load_cumulated_g_d <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = load_local_g_d) # MARGIN = 2 -> iterates over columns
 	
 	}else{
 	
-		load_cumulated <- rep(NA, ncol(topo_matrix))
+		load_cumulated_g_d <- rep(NA, ncol(topo_matrix))
 		
 		ARA_Nr_nach_See <- c(664301, 296400, 645700, 102400, 94400, 59300, 26101, 160200, 73300, 110400, 420800, 140100, 19301)
 		
@@ -90,35 +90,40 @@ run_daily_load <- function( # one function run per compound
 		
 		for(n in 1:ncol(topo_matrix)){
 	
-			
-	
-			has_ARA_nach_See <- rownames(topo_matrix)[topo_matrix[, n] != 0][rownames(topo_matrix)[topo_matrix[, n] != 0] %in% ARA_Nr_nach_See]
-			
+			has_ARA_nach_See <- rownames(topo_matrix)[topo_matrix[, n] != 0][rownames(topo_matrix)[topo_matrix[, n] != 0] %in% ARA_Nr_nach_See]		
 			those <- which(rownames(topo_matrix) %in% has_ARA_nach_See)
 			
 			if(length(those)){ 
 			
+				those <- c(those, n) 	# -> INDEX in matrix
+				
 				those <- those[order(colSums(topo_matrix[, those, drop = FALSE] != 0), decreasing = FALSE)] # if(length(those) > 1)
 				
-				those <- c(those, n)	# -> INDEX in matrix
+				if(those[length(those)] != n) stop("THIS SHOULD NOT HAPPEN") # current STP should be last one when sorted
 				
-				done_STPs <- c()		# -> ARA Nr
+				
+				done_STPs <- c()		# -> INDEX in matrix
 				
 				lake_eliminination_rate
 				
 				for(m in those){
 				
-					done_STPs <- unique(c(done_STPs, rownames(topo_matrix)[topo_matrix[, m] != 0]))
+					has_upstream_STPs <- which(topo_matrix[, m] != 0)
+					has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% done_STPs)]
+					done_STPs <- unique(c(done_STPs, which(topo_matrix[, m] != 0)))
+				
+				
+				
 				
 				}
 			
 			
+			}else{
+			
+			
 			}
 			
-	
-			
-			
-			#load_cumulated[n] <- sum(topo_matrix[, n] * load_local)
+			#load_cumulated_g_d[n] <- sum(topo_matrix[, n] * load_local_g_d)
 	
 	
 		}
@@ -128,9 +133,9 @@ run_daily_load <- function( # one function run per compound
 	inhabitants_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = STP_amount_inhabitants)
 	STP_count_cumulated <- apply(topo_matrix, MARGIN = 2, function(x){ sum(x) - 1 })
 	###############################################
-	result <- data.frame(as.numeric(STP_id), as.numeric(load_local), as.numeric(load_cumulated), 
+	result <- data.frame(as.numeric(STP_id), as.numeric(load_local_g_d), as.numeric(load_cumulated_g_d), 
 		as.numeric(inhabitants_cumulated), as.numeric(STP_count_cumulated), row.names = NULL)
-	names(result) <- c("STP_ID", "load_local", "load_cumulated", "inhabitants_cumulated", "STP_count_cumulated")
+	names(result) <- c("STP_ID", "load_local_g_d", "load_cumulated_g_d", "inhabitants_cumulated", "STP_count_cumulated")
 	return(result)
 	
 }
