@@ -99,7 +99,7 @@ run_daily_load <- function( # one function run per compound
 				
 				those <- those[order(colSums(topo_matrix[, those, drop = FALSE] != 0), decreasing = FALSE)] # if(length(those) > 1)
 				
-				if(those[length(those)] != n) stop("THIS SHOULD NOT HAPPEN") # current STP should be last one when sorted
+				if(those[length(those)] != n) stop("THIS SHOULD NOT HAPPEN") # current STP should be last one when sorted by increasing count of upstream STPs
 				
 				
 				done_STPs <- c()		# -> INDEX in matrix
@@ -107,6 +107,8 @@ run_daily_load <- function( # one function run per compound
 				lake_eliminination_rate
 				
 				for(m in those){
+				
+				
 				
 					has_upstream_STPs <- which(topo_matrix[, m] != 0)
 					has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% done_STPs)]
