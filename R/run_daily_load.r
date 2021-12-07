@@ -19,6 +19,10 @@ run_daily_load <- function( # one function run per compound
 	compound_load_per_hospital_bed_and_day = FALSE, # [g / E d], set to FALSE to ignore and then use compound_load_total
 	compound_elimination_STP,						# named dataframe or vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,							# fraction excreted and discharged, set to 1 to ignore
+	
+	with_lake_elimination = FALSE,
+	lake_eliminination_rates = 0.25,
+	
 	topo_matrix
 	
 ){
@@ -71,7 +75,18 @@ run_daily_load <- function( # one function run per compound
 	if(!(length(compound_elimination_STP_calc) %in% c(1, length(STP_id)))) stop("Problem in run_daily_load: invalid length for compound_elimination_STP_calc.")
 	load_local <- STP_amount_inhabitants * compound_load_gramm_per_capita_and_day * compound_excreted * compound_elimination_STP_calc
 	load_local <- load_local + STP_amount_hospital_beds * compound_load_per_hospital_bed_and_day * compound_excreted * compound_elimination_STP_calc
-	load_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = load_local)
+	
+	if(!with_lake_elimination){
+	
+		load_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = load_local) # MARGIN = 2 -> iterates over columns
+	
+	}else{
+	
+	
+	
+	
+	}
+	
 	inhabitants_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = STP_amount_inhabitants)
 	STP_count_cumulated <- apply(topo_matrix, MARGIN = 2, function(x){ sum(x) - 1 })
 	###############################################

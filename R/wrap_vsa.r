@@ -54,6 +54,9 @@ wrap_vsa <- function(
 	compound_elimination_STP = NULL,			# named dataframe or vector with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 	compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
 	
+	with_lake_elimination = FALSE,
+	lake_eliminination_rates = 0.25,
+	
 	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY"),
 	path_out = FALSE,							# if FALSE, return data.frame
 	overwrite = TRUE,
@@ -183,6 +186,10 @@ wrap_vsa <- function(
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day,
 		compound_elimination_STP,					# vector or STP-specific matrix with elimination fractions over treatment steps (not percentage values); set to 0 to skip a step 
 		compound_excreted = 1,						# fraction excreted and discharged, set to 1 to ignore
+		
+		with_lake_elimination = with_lake_elimination,
+		lake_eliminination_rates = lake_eliminination_rates,		
+		
 		topo_matrix
 		
 	) # [g / d]
