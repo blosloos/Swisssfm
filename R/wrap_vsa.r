@@ -122,7 +122,7 @@ wrap_vsa <- function(
 			ARA_Nr_nach_See <- c(664301, 296400, 645700, 102400, 94400, 59300, 26101, 160200, 73300, 110400, 420800, 140100, 19301)
 			Umleitung <- STP_table[, "Typ_MV-Behandlung"] == "Umleitung"
 			Umleitung[is.na(Umleitung)] <- "FALSE" 
-			if(ARA_Nr_nach_See %in% STP_table$ARA_Nr[as.logical(Umleitung)]) stop("ARA_Nr_nach_See affected by Umleitung - this must not be the case for.")
+			if(any(ARA_Nr_nach_See %in% STP_table$ARA_Nr[as.logical(Umleitung)])) stop("ARA_Nr_nach_See affected by Umleitung - this must not be the case for.")
 		}
 		
 		# get & clean treatment steps
@@ -176,7 +176,8 @@ wrap_vsa <- function(
 		compound_load_gramm_per_capita_and_day = compound_load_gramm_per_capita_and_day
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
 		compound_excreted = 1
-	
+		lake_eliminination_rate = lake_eliminination_rates
+		
 	}
 	
 	result_table <- run_daily_load(
