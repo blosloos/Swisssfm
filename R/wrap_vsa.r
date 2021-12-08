@@ -207,6 +207,11 @@ wrap_vsa <- function(
 		"conc_cumulated_ug_L" = (result_table$load_cumulated / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river
 	)
 	###############################################
+	# STP_discharge_L_s	
+	result_table <- cbind(result_table, 
+		"STP_discharge_L_s" = (STP_amount_inhabitants * STP_discharge_per_capita / (24 * 60 * 60))
+	)
+	###############################################
 	# fraction STP discharge ######################
 	sewage_discharge_local <- STP_amount_people_local * STP_discharge_per_capita / 24 / 60 / 60 				# convert to [l/s]
 	STP_amount_people_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local)
@@ -317,6 +322,7 @@ wrap_vsa <- function(
 	result_table <- result_table[, c( 
 		"STP_ID",
 		"inhabitants_cumulated",
+		"STP_discharge_L_s",
 		"STP_count_cumulated",
 		"Discharge_ratio_river_to_STP_local",
 		"Discharge_ratio_river_to_STP_cumulated",

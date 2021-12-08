@@ -135,8 +135,13 @@ run_daily_load <- function( # one function run per compound
 	inhabitants_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y)}, y = STP_amount_inhabitants)
 	STP_count_cumulated <- apply(topo_matrix, MARGIN = 2, function(x){ sum(x) - 1 })
 	###############################################
-	result <- data.frame(as.numeric(STP_id), as.numeric(load_local_g_d), as.numeric(load_cumulated_g_d), 
-		as.numeric(inhabitants_cumulated), as.numeric(STP_count_cumulated), row.names = NULL)
+	result <- data.frame(
+		as.numeric(STP_id), 
+		as.numeric(load_local_g_d), 
+		as.numeric(load_cumulated_g_d), 
+		as.numeric(inhabitants_cumulated), 
+		as.numeric(STP_count_cumulated), 
+		row.names = NULL)
 	names(result) <- c("STP_ID", "load_local_g_d", "load_cumulated_g_d", "inhabitants_cumulated", "STP_count_cumulated")
 	return(result)
 	
