@@ -98,21 +98,21 @@ sfmplot <- function(){
 				
 					path_in <- isolate(input$path_in_csv)
 					if(grepl(".xlsx", path_in, fixed = TRUE)){
-						STP_table <- try({
+						STP_table_in <- try({
 							openxlsx:::read.xlsx(xlsxFile = path_in, sheet = 1)
 						})
 					}else{
-						STP_table <- try({
+						STP_table_in <- try({
 							read.csv(file = path_in, sep = isolate(input$csv_sep), stringsAsFactors = FALSE)
 						})
 					}
 					
-					if(class(STP_table) == "try-error"){
-						shinyalert("Warning", STP_table[[1]], type = "error")
+					if(class(STP_table_in) == "try-error"){
+						shinyalert("Warning", STP_table_in[[1]], type = "error")
 					}else{
 					
 						if(
-							!any(STP_table[6, ] %in% c("STP_ID", "ARANEXTNR", "LageX", "LageY"))
+							!any(STP_table_in[6, ] %in% c("STP_ID", "ARANEXTNR", "LageX", "LageY"))
 						){
 						
 							shinyalert("Warning", "Missing columns in result table.", type = "error")
@@ -120,19 +120,19 @@ sfmplot <- function(){
 						}else{
 						
 							##############################################################
-							names(STP_table) <- STP_table[6, ]
-							STP_table <- STP_table[7:nrow(STP_table),, drop = FALSE]
-							STP_table$LageX <- as.numeric(STP_table$LageX)
-							STP_table$LageY <- as.numeric(STP_table$LageY)
+							names(STP_table_in) <- STP_table_in[6, ]
+							STP_table_in <- STP_table_in[7:nrow(STP_table_in),, drop = FALSE]
+							STP_table_in$LageX <- as.numeric(STP_table_in$LageX)
+							STP_table_in$LageY <- as.numeric(STP_table_in$LageY)
 							
-							STP_table <<- STP_table
+							STP_table_in <<- STP_table_in
 
 							##############################################################			
 							output$STP_plane <- renderPlot({
 
 								plot.new()
-								plot.window(xlim = range(STP_table$LageX), ylim = range(STP_table$LageY))
-								points(STP_table$LageX, STP_table$LageY, pch = 19, col = "black")
+								plot.window(xlim = range(STP_table_in$LageX), ylim = range(STP_table_in$LageY))
+								points(STP_table_in$LageX, STP_table_in$LageY, pch = 19, col = "black")
 
 
 
@@ -141,7 +141,7 @@ sfmplot <- function(){
 							})
 							##############################################################
 							output$STP_table_output <- DT::renderDataTable({
-								DT::datatable(STP_table)
+								DT::datatable(STP_table_in)
 							})
 							##############################################################					
 					
@@ -175,27 +175,26 @@ sfmplot <- function(){
 				plot_lim$xlim #plot_lim$ylim
 				input$add_plot
 				
-				if(any(objects(envir = as.environment(".GlobalEnv")) == "STP_table")){
+				if(any(objects(envir = as.environment(".GlobalEnv")) == "STP_table_in")){
 					
 					output$STP_plane <- renderPlot({
 					
 						
-						if(is.null(isolate(plot_lim$xlim))) x_lim <- range(STP_table$LageX) else x_lim <- isolate(plot_lim$xlim)
-						if(is.null(isolate(plot_lim$ylim))) y_lim <- range(STP_table$LageY) else y_lim <- isolate(plot_lim$ylim)				
+						if(is.null(isolate(plot_lim$xlim))) x_lim <- range(STP_table_in$LageX) else x_lim <- isolate(plot_lim$xlim)
+						if(is.null(isolate(plot_lim$ylim))) y_lim <- range(STP_table_in$LageY) else y_lim <- isolate(plot_lim$ylim)				
 						
 						plot.new()
 						plot.window(xlim = x_lim, ylim = y_lim)
 						##################################################################
 						if("Link each STP to its ARANEXT" %in% isolate(input$add_plot)){
 
-cat("\n AM LINKING STPs")
-							for(i in 1:nrow(STP_table)){
+							for(i in 1:nrow(STP_table_in)){
 
-								if(is.na(STP_table[i, "ARANEXTNR"])) next
+								if(is.na(STP_table_in[i, "ARANEXTNR"])) next
 								
-								to <- which(STP_table$STP_ID == STP_table[i, "ARANEXTNR"])
+								to <- which(STP_table_in$STP_ID == STP_table_in[i, "ARANEXTNR"])
 								
-								lines(c(STP_table$LageX[i], STP_table$LageX[to]), c(STP_table$LageY[i], STP_table$LageY[to]))
+								lines(c(STP_table_in$LageX[i], STP_table_in$LageX[to]), c(STP_table_in$LageY[i], STP_table_in$LageY[to]))
 								
 
 
@@ -204,7 +203,7 @@ cat("\n AM LINKING STPs")
 						}
 						##################################################################						
 
-						points(STP_table$LageX, STP_table$LageY, pch = 19, col = "black")
+						points(STP_table_in$LageX, STP_table_in$LageY, pch = 19, col = "black")
 
 						##################################################################						
 						box(col = "darkgrey")

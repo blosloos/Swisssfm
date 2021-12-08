@@ -311,54 +311,54 @@ wrap_vsa <- function(
 			result_table[, names(result_table) != "STP_ID"]
 		)
 		result_table <- rbind(
+			#rep("", ncol(result_table)),
 			rep("", ncol(result_table)),
 			rep("", ncol(result_table)),
 			rep("", ncol(result_table)),
-			rep("", ncol(result_table)),
-			rep("", ncol(result_table)),
-			rep("", ncol(result_table)),
+			#rep("", ncol(result_table)),
+			#rep("", ncol(result_table)),
 			names(result_table),
 			result_table
 		)
 		names(result_table) <- NULL
 		
-		result_table[3, 2] <- "Compound name:"
-		result_table[4, 2] <- compound_name	
+		result_table[2, 2] <- "Compound name:"
+		result_table[3, 2] <- compound_name	
 		
-		result_table[3, 3] <- "Compound load [g / E d]):"
-		result_table[4, 4] <- compound_load_gramm_per_capita_and_day			
+		result_table[2, 3] <- "Compound load [g / E d]):"
+		result_table[3, 4] <- compound_load_gramm_per_capita_and_day			
 		
 		
-		result_table[3, 5] <- "Szenario Jahr:"
-		result_table[4, 5] <- STP_scenario_year
+		result_table[2, 5] <- "Szenario Jahr:"
+		result_table[3, 5] <- STP_scenario_year
 		
 		result_table[2, 7] <- "Elimitationsraten" 
-		result_table[3, 7] <- "Nitrifikation:"	
-		result_table[4, 7] <- compound_elimination_STP$Nitrifikation		
-		result_table[3, 8] <- "Denitrifikation:"	
-		result_table[4, 8] <- compound_elimination_STP$Denitrifikation		
-		result_table[3, 9] <- "P_Elimination:"	
-		result_table[4, 9] <- compound_elimination_STP$P_Elimination
-		result_table[3, 10] <- "GAK:"	
-		result_table[4, 10] <- compound_elimination_STP$GAK
-		result_table[3, 11] <- "Kombi:"	
-		result_table[4, 11] <- compound_elimination_STP$Kombi
-		result_table[3, 12] <- "Ozonung:"	
-		result_table[4, 12] <- compound_elimination_STP$Ozonung
-		result_table[3, 13] <- "PAK:"	
-		result_table[4, 13] <- compound_elimination_STP$PAK		
-		result_table[3, 14] <- "Ausbau:"	
-		result_table[4, 14] <- compound_elimination_STP$Ausbau	
+		result_table[2, 7] <- "Nitrifikation:"	
+		result_table[3, 7] <- compound_elimination_STP$Nitrifikation		
+		result_table[2, 8] <- "Denitrifikation:"	
+		result_table[3, 8] <- compound_elimination_STP$Denitrifikation		
+		result_table[2, 9] <- "P_Elimination:"	
+		result_table[3, 9] <- compound_elimination_STP$P_Elimination
+		result_table[2, 10] <- "GAK:"	
+		result_table[3, 10] <- compound_elimination_STP$GAK
+		result_table[2, 11] <- "Kombi:"	
+		result_table[3, 11] <- compound_elimination_STP$Kombi
+		result_table[2, 12] <- "Ozonung:"	
+		result_table[3, 12] <- compound_elimination_STP$Ozonung
+		result_table[2, 13] <- "PAK:"	
+		result_table[3, 13] <- compound_elimination_STP$PAK		
+		result_table[2, 14] <- "Ausbau:"	
+		result_table[3, 14] <- compound_elimination_STP$Ausbau	
 		
-		result_table[2, 16] <- "Parameter" 		
-		result_table[3, 16] <- "Umleitung aktiv?"
-		result_table[4, 16] <- as.character(STP_reroute)
+		result_table[1, 16] <- "Parameter" 		
+		result_table[2, 16] <- "Umleitung aktiv?"
+		result_table[3, 16] <- as.character(STP_reroute)
 		
-		result_table[3, 17] <- "Filterung treatment steps?"
-		result_table[4, 17] <- as.character(STP_filter_steps)
+		result_table[2, 17] <- "Filterung treatment steps?"
+		result_table[3, 17] <- as.character(STP_filter_steps)
 		
-		result_table[3, 18] <- "Elimination Seen aktiv?"
-		result_table[4, 18] <- as.character(with_lake_elimination)		
+		result_table[2, 18] <- "Elimination Seen aktiv?"
+		result_table[3, 18] <- as.character(with_lake_elimination)		
 		
 		
 		if(!file.exists(path_out)) dir.create(path = path_out)
