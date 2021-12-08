@@ -83,8 +83,14 @@ run_daily_load <- function( # one function run per compound
 	}else{
 	
 		load_cumulated_g_d <- rep(NA, ncol(topo_matrix))
-		
 		ARA_Nr_nach_See <- c(664301, 296400, 645700, 102400, 94400, 59300, 26101, 160200, 73300, 110400, 420800, 140100, 19301)
+		
+		except_ARA <- vector("list", 3) # Spezialfälle gemäss Kommentar in Seen.xlsx
+		names(except_ARA) <- c(102400, 26101, 12101)
+		except_ARA[[1]] <- c(100900, 106603, 100100, 100402, 100401, 109800)
+		except_ARA[[2]] <- c(26102, 130101, 130103, 137000, 170500)		
+		except_ARA[[3]] <- c(11701)		
+		
 		
 		if(any(colnames(topo_matrix) != rownames(topo_matrix))) stop("topo_matrix must be symmetric")
 		
@@ -93,41 +99,41 @@ run_daily_load <- function( # one function run per compound
 			has_ARA_nach_See <- rownames(topo_matrix)[topo_matrix[, n] != 0][rownames(topo_matrix)[topo_matrix[, n] != 0] %in% ARA_Nr_nach_See]		
 			those <- which(rownames(topo_matrix) %in% has_ARA_nach_See)
 			
-			if(length(those)){ 
-			
+			if(length(those)){
+
 				those <- c(those, n) 	# -> INDEX in matrix
-				
 				those <- those[order(colSums(topo_matrix[, those, drop = FALSE] != 0), decreasing = FALSE)] # if(length(those) > 1)
-				
 				if(those[length(those)] != n) stop("THIS SHOULD NOT HAPPEN") # current STP should be last one when sorted by increasing count of upstream STPs
 				
-				
 				done_STPs <- c()		# -> INDEX in matrix
+				load_cumulated_g_d_loop <- c()
 				
-				lake_eliminination_rate
+				for(m in 1:length(those)){
 				
-				for(m in those){
-				
-				
-				
-					has_upstream_STPs <- which(topo_matrix[, m] != 0)
-					has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% done_STPs)]
-					done_STPs <- unique(c(done_STPs, which(topo_matrix[, m] != 0)))
-				
-				
-				
-				
+					# Which are the non-nested STPs for this STP?
+					has_upstream_STPs <- which(topo_matrix[, those[m]] != 0)
+					has_upstream_STPs <- has_upstream_STPs[has_upstream_STPs != those[m]] # STP after lake excluded, and also last STP
+					if(rownames(topo_matrix)[those[m]] %in% names(except_ARA)){
+						
+						this <- which(names(except_ARA) == rownames(topo_matrix)[those[m]])
+						these_ARAs_to_exclude <- match(except_ARA[[this]], rownames(topo_matrix))
+						has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% these_ARAs_to_exclude)]
+					
+					}					
+ 					has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% done_STPs)]
+					done_STPs <- unique(c(done_STPs, which(topo_matrix[, those[m]] != 0)))
+					
+					if(length(has_upstream_STPs)) load_cumulated_g_d_loop <- c(load_cumulated_g_d_loop,
+						sum(load_local_g_d[has_upstream_STPs]) * (lake_eliminination_rate ^ (length(those) - m)) # last section of STPs, after last lake -> lake_eliminination_rate^0 = 1
+					)
+										
 				}
+				# add load of last STP 
+				load_cumulated_g_d_loop <- c(load_cumulated_g_d_loop, load_local_g_d[those[m]])
+				load_cumulated_g_d[n] <- sum(load_cumulated_g_d_loop)
 			
-			
-			}else{
-			
-			
-			}
-			
-			#load_cumulated_g_d[n] <- sum(topo_matrix[, n] * load_local_g_d)
-	
-	
+			}else load_cumulated_g_d[n] <- sum(topo_matrix[, n] * load_local_g_d)
+
 		}
 	
 	}
