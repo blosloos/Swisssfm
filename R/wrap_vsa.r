@@ -203,8 +203,8 @@ wrap_vsa <- function(
 	###############################################
 	# concentration ###############################
 	result_table <- cbind(result_table, 
-		"conc_local_ng_L" =  (result_table$load_local / (24 * 60 * 60)) * 1E9 / STP_local_discharge_river, 			# ng / L  , load: g/d  discharge: Q347_L_s_kleinster
-		"conc_cumulated_ng_L" = (result_table$load_cumulated / (24 * 60 * 60)) * 1E9 / STP_local_discharge_river
+		"conc_local_ug_L" =  (result_table$load_local / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river, 			# ng / L  , load: g/d  discharge: Q347_L_s_kleinster
+		"conc_cumulated_ug_L" = (result_table$load_cumulated / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river
 	)
 	###############################################
 	# fraction STP discharge ######################
@@ -247,28 +247,28 @@ wrap_vsa <- function(
 	STP_amount_people_local_classed[classed != "nur_C_Abbau"] <- 0
 	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
 	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
-	Fraction_nur_C_Abbau <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	Fraction_of_wastewater_only_C_removal <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
 	
 	# Nitrifikation
 	STP_amount_people_local_classed <- STP_amount_people_local
 	STP_amount_people_local_classed[classed != "Nitrifikation"] <- 0
 	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
 	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
-	Fraction_Nitrifikation <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	Fraction_of_wastewater_nitrification <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
 	
 	# Denitrifikation
 	STP_amount_people_local_classed <- STP_amount_people_local
 	STP_amount_people_local_classed[classed != "Denitrifikation"] <- 0
 	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
 	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
-	Fraction_Denitrifikation <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	Fraction_of_wastewater_denitrification <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
 
 	# MV_Behandlung
 	STP_amount_people_local_classed <- STP_amount_people_local
 	STP_amount_people_local_classed[classed != "MV_Behandlung"] <- 0
 	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
 	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
-	Fraction_MV_Behandlung <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	Fraction_of_wastewater_advanced_treatment <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
 	
 	# Sonstige
 	STP_amount_people_local_classed <- STP_amount_people_local
@@ -282,23 +282,61 @@ wrap_vsa <- function(
 	
 	# -> Test: rowsum für Anteile muss 1 ergeben
 	if(FALSE) if(any(rowSums(cbind(
-			"Fraction_nur_C_Abbau" = Fraction_nur_C_Abbau,
-			"Fraction_Nitrifikation" = Fraction_Nitrifikation,
-			"Fraction_Denitrifikation" = Fraction_Denitrifikation,
-			"Fraction_MV_Behandlung" = Fraction_MV_Behandlung,
-			"Fraction_Sonstige" = Fraction_Sonstige
+			"Fraction_of_wastewater_only_C_removal" = Fraction_of_wastewater_only_C_removal,
+			"Fraction_of_wastewater_nitrification" = Fraction_of_wastewater_nitrification,
+			"Fraction_of_wastewater_denitrification" = Fraction_of_wastewater_denitrification,
+			"Fraction_of_wastewater_advanced_treatment" = Fraction_of_wastewater_advanced_treatment
 		)) != 1)) stop("Missing treatment fractions in wrap_vsa - revise")
 	
 	result_table <- cbind(result_table, 
-		"Fraction_nur_C_Abbau" = Fraction_nur_C_Abbau,
-		"Fraction_Nitrifikation" = Fraction_Nitrifikation,
-		"Fraction_Denitrifikation" = Fraction_Denitrifikation,
-		"Fraction_MV_Behandlung" = Fraction_MV_Behandlung,
-		"Fraction_Sonstige" = Fraction_Sonstige
+		"Fraction_of_wastewater_only_C_removal" = Fraction_of_wastewater_only_C_removal,
+		"Fraction_of_wastewater_nitrification" = Fraction_of_wastewater_nitrification,
+		"Fraction_of_wastewater_denitrification" = Fraction_of_wastewater_denitrification,
+		"Fraction_of_wastewater_advanced_treatment" = Fraction_of_wastewater_advanced_treatment
 	)
+	
+	Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated <- (1 - Fraction_of_wastewater_advanced_treatment) * Fraction_STP_discharge_of_river_cumulated
+	Fraction_of_river_only_C_removal <- Fraction_of_wastewater_only_C_removal * Fraction_STP_discharge_of_river_cumulated
+	Fraction_of_river_nitrification <- Fraction_of_wastewater_nitrification * Fraction_STP_discharge_of_river_cumulated
+	Fraction_of_river_denitrification <-  Fraction_of_wastewater_denitrification * Fraction_STP_discharge_of_river_cumulated
+	Fraction_of_river_advanced_treatment <- Fraction_of_wastewater_advanced_treatment * Fraction_STP_discharge_of_river_cumulated
+	
+	result_table <- cbind(result_table, 
+		"Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated" = Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated,
+		"Fraction_of_river_only_C_removal" = Fraction_of_river_only_C_removal,
+		"Fraction_of_river_nitrification" = Fraction_of_river_nitrification,
+		"Fraction_of_river_denitrification" = Fraction_of_river_denitrification,
+		"Fraction_of_river_advanced_treatment" = Fraction_of_river_advanced_treatment
+	)	
+	
 	
 	###############################################
 	# format, export & return #####################	
+	
+	# -> reorder table
+	result_table <- result_table[, c( 
+		"STP_ID",
+		"inhabitants_cumulated",
+		"STP_count_cumulated",
+		"Discharge_ratio_river_to_STP_local",
+		"Discharge_ratio_river_to_STP_cumulated",
+		"Fraction_STP_discharge_of_river_local",
+		"Fraction_STP_discharge_of_river_cumulated",
+		"Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated",
+		"Fraction_of_river_only_C_removal",
+		"Fraction_of_river_nitrification",
+		"Fraction_of_river_denitrification",
+		"Fraction_of_river_advanced_treatment",
+		"Fraction_of_wastewater_only_C_removal",
+		"Fraction_of_wastewater_nitrification",
+		"Fraction_of_wastewater_denitrification",
+		"Fraction_of_wastewater_advanced_treatment",
+		"load_local_g_d",
+		"load_cumulated_g_d",
+		"conc_local_ug_L",
+		"conc_cumulated_ug_L"
+	), drop = FALSE]
+	
 	if(is.logical(path_out)) return(result_table) else{
 		if(file.exists(path_out) & !overwrite) stop("File at path_out already exists, and overwrite is set to FALSE")
 	
@@ -325,30 +363,29 @@ wrap_vsa <- function(
 		result_table[2, 2] <- "Compound name:"
 		result_table[3, 2] <- compound_name	
 		
-		result_table[2, 3] <- "Compound load [g / E d]):"
-		result_table[3, 4] <- compound_load_gramm_per_capita_and_day			
-		
+		result_table[2, 3] <- "Compound load [g/In d]):"
+		result_table[3, 3] <- compound_load_gramm_per_capita_and_day
 		
 		result_table[2, 5] <- "Szenario Jahr:"
 		result_table[3, 5] <- STP_scenario_year
 		
-		result_table[2, 7] <- "Elimitationsraten" 
-		result_table[2, 7] <- "Nitrifikation:"	
-		result_table[3, 7] <- compound_elimination_STP$Nitrifikation		
-		result_table[2, 8] <- "Denitrifikation:"	
-		result_table[3, 8] <- compound_elimination_STP$Denitrifikation		
-		result_table[2, 9] <- "P_Elimination:"	
+		result_table[1, 7] <- "Elimitationsraten"
+		result_table[2, 7] <- "Nitrifikation:"
+		result_table[3, 7] <- compound_elimination_STP$Nitrifikation
+		result_table[2, 8] <- "Denitrifikation:"
+		result_table[3, 8] <- compound_elimination_STP$Denitrifikation
+		result_table[2, 9] <- "P_Elimination:"
 		result_table[3, 9] <- compound_elimination_STP$P_Elimination
-		result_table[2, 10] <- "GAK:"	
+		result_table[2, 10] <- "GAK:"
 		result_table[3, 10] <- compound_elimination_STP$GAK
-		result_table[2, 11] <- "Kombi:"	
+		result_table[2, 11] <- "Kombi:"
 		result_table[3, 11] <- compound_elimination_STP$Kombi
-		result_table[2, 12] <- "Ozonung:"	
+		result_table[2, 12] <- "Ozonung:"
 		result_table[3, 12] <- compound_elimination_STP$Ozonung
-		result_table[2, 13] <- "PAK:"	
-		result_table[3, 13] <- compound_elimination_STP$PAK		
-		result_table[2, 14] <- "Ausbau:"	
-		result_table[3, 14] <- compound_elimination_STP$Ausbau	
+		result_table[2, 13] <- "PAK:"
+		result_table[3, 13] <- compound_elimination_STP$PAK
+		result_table[2, 14] <- "Ausbau:"
+		result_table[3, 14] <- compound_elimination_STP$Ausbau
 		
 		result_table[1, 16] <- "Parameter" 		
 		result_table[2, 16] <- "Umleitung aktiv?"
