@@ -82,6 +82,8 @@ run_daily_load <- function( # one function run per compound
 	
 	}else{
 	
+		if(lake_eliminination_rate < 0 | lake_eliminination_rate > 1) stop("lake_eliminination_rate must be within [0, 1]")
+	
 		load_cumulated_g_d <- rep(NA, ncol(topo_matrix))
 		ARA_Nr_nach_See <- c(664301, 296400, 645700, 102400, 94400, 59300, 26101, 160200, 73300, 110400, 420800, 140100, 19301)
 		
@@ -124,7 +126,7 @@ run_daily_load <- function( # one function run per compound
 					done_STPs <- unique(c(done_STPs, which(topo_matrix[, those[m]] != 0)))
 					
 					if(length(has_upstream_STPs)) load_cumulated_g_d_loop <- c(load_cumulated_g_d_loop,
-						sum(load_local_g_d[has_upstream_STPs]) * (lake_eliminination_rate ^ (length(those) - m)) # last section of STPs, after last lake -> lake_eliminination_rate^0 = 1
+						sum(load_local_g_d[has_upstream_STPs]) * ((1 - lake_eliminination_rate) ^ (length(those) - m)) # last section of STPs, after last lake -> lake_eliminination_rate^0 = 1
 					)
 										
 				}

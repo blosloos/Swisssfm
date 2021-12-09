@@ -57,6 +57,7 @@ wrap_vsa <- function(
 	with_lake_elimination = FALSE,
 	lake_eliminination_rates = 0.25,
 	
+	use_columns_local_discharge = ("Q347_L_s_kleinster"),
 	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY"),
 	path_out = FALSE,							# if FALSE, return data.frame
 	overwrite = TRUE,
@@ -73,9 +74,9 @@ wrap_vsa <- function(
 	
 		# all required columns available?
 		cols_required <- c(
-			"ARA_Nr", "ARANEXTNR", "angeschlossene_Einwohner_Abgabeliste2021", "Q347_L_s_kleinster", 
+			"ARA_Nr", "ARANEXTNR", "angeschlossene_Einwohner_Abgabeliste2021", 
 			"Nitrifikation", "Denitrifikation", "P_Elimination", "Typ_MV-Behandlung", "Inbetriebnahme",
-			"ARA_Nr_Ziel_Umleitung"
+			"ARA_Nr_Ziel_Umleitung", use_columns_local_discharge
 		)
 		if(any(is.na(match(cols_required, names(STP_table))))){
 			these_missing <- paste(cols_required[is.na(match(cols_required, names(STP_table)))], collapse = ",")
@@ -176,7 +177,7 @@ wrap_vsa <- function(
 		compound_load_gramm_per_capita_and_day = compound_load_gramm_per_capita_and_day
 		compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
 		compound_excreted = 1
-		lake_eliminination_rate = lake_eliminination_rates
+		lake_eliminination_rate = lake_eliminination_rate
 		
 	}
 	
