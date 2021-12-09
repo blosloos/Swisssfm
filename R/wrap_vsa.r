@@ -113,7 +113,7 @@ wrap_vsa <- function(
 		STP_id <- as.character(STP_table$ARA_Nr)
 		STP_id_next <- as.character(STP_table$ARANEXTNR)
 		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(STP_table$angeschlossene_Einwohner_Abgabeliste2021), fixed = TRUE))
-		STP_local_discharge_river <- as.numeric(STP_table[, "use_columns_local_discharge"])
+		STP_local_discharge_river <- as.numeric(STP_table[, use_columns_local_discharge])
 		#STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
 		#	mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
 		STP_amount_people_local <- STP_table$angeschlossene_Einwohner_Abgabeliste2021
