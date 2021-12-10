@@ -205,7 +205,7 @@ wrap_vsa <- function(
 			compound_load_gramm_per_capita_and_day = compound_load_gramm_per_capita_and_day_loop
 			compound_load_per_hospital_bed_and_day = compound_load_per_hospital_bed_and_day
 			compound_excreted = 1
-			lake_eliminination_rate = lake_eliminination_rate
+			lake_eliminination_rate = lake_eliminination_rates_loop
 			
 		}
 		
