@@ -186,6 +186,7 @@ wrap_vsa <- function(
 				row.names = FALSE, 
 				col.names = FALSE
 			)
+			
 		})
 		if(class(done_write) == "try-error") stop("Export of results to path_out.csv failed. Is this path valid? Is the file open in another software?")
 	
