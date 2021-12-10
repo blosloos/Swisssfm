@@ -485,6 +485,10 @@ wrap_vsa <- function(
 		result_table[2, 18] <- "Elimination Seen aktiv?"
 		result_table[3, 18] <- paste(with_lake_elimination, collapse = ", ")	
 		
+		result_table[2, 19] <- "Eliminationsraten See"
+		result_table[3, 19] <- paste(lake_eliminination_rates, collapse = ", ")			
+		
+		
 		
 		if(!file.exists(path_out)) dir.create(path = path_out)
 		
