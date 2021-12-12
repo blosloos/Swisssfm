@@ -298,8 +298,11 @@ wrap_vsa <- function(
 	Discharge_ratio_river_to_STP_local <- STP_local_discharge_river / sewage_discharge_local
 	Discharge_ratio_river_to_STP_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated
 	
-	Fraction_STP_discharge_of_river_local <- sewage_discharge_local / ( STP_local_discharge_river + sewage_discharge_local)
-	Fraction_STP_discharge_of_river_cumulated <- sewage_discharge_cumulated / ( STP_local_discharge_river + sewage_discharge_local)	
+	Fraction_STP_discharge_of_river_local <- sewage_discharge_local / ( STP_local_discharge_river + sewage_discharge_local )
+	Fraction_STP_discharge_of_river_cumulated <- sewage_discharge_cumulated / ( STP_local_discharge_river + sewage_discharge_local )	
+	
+	
+	
 	
 	result_table <- cbind(result_table, 
 		"Discharge_ratio_river_to_STP_local" = Discharge_ratio_river_to_STP_local,

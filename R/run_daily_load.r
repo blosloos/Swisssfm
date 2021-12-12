@@ -116,14 +116,15 @@ run_daily_load <- function( # one function run per compound
 					has_upstream_STPs <- which(topo_matrix[, those[m]] != 0)
 					has_upstream_STPs <- has_upstream_STPs[has_upstream_STPs != those[m]] # STP after lake excluded, and also last STP
 					if(rownames(topo_matrix)[those[m]] %in% names(except_ARA)){
-						
+							
 						this <- which(names(except_ARA) == rownames(topo_matrix)[those[m]])
 						these_ARAs_to_exclude <- match(except_ARA[[this]], rownames(topo_matrix))
 						has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% these_ARAs_to_exclude)]
 					
-					}					
+					}
  					has_upstream_STPs <- has_upstream_STPs[!(has_upstream_STPs %in% done_STPs)]
-					done_STPs <- unique(c(done_STPs, which(topo_matrix[, those[m]] != 0)))
+					done_STPs <- unique(c(done_STPs, which(topo_matrix[, those[m]] != 0)) )
+					done_STPs <- done_STPs[done_STPs != those[m]] # except has_ARA_nach_See itself
 					
 					if(length(has_upstream_STPs)) load_cumulated_g_d_loop <- c(load_cumulated_g_d_loop,
 						sum(load_local_g_d[has_upstream_STPs]) * ((1 - lake_eliminination_rate) ^ (length(those) - m)) # last section of STPs, after last lake -> lake_eliminination_rate^0 = 1
