@@ -58,6 +58,7 @@ wrap_vsa <- function(
 	lake_eliminination_rates = 0.25,
 	
 	use_columns_local_discharge = ("Q347_L_s_kleinster"),
+	use_columns_local_discharge_for_fractions = ("Q347_L_s_kleinster"), 
 	add_columns_from_STP_table = c("ARANEXTNR", "LageX", "LageY"),
 	path_out = FALSE,							# if FALSE, return data.frame
 	overwrite = TRUE,
@@ -120,7 +121,7 @@ wrap_vsa <- function(
 		STP_id <- as.character(STP_table$ARA_Nr)
 		STP_id_next <- as.character(STP_table$ARANEXTNR)
 		STP_amount_inhabitants <- as.numeric(gsub(".", "", as.character(STP_table$angeschlossene_Einwohner_Abgabeliste2021), fixed = TRUE))
-		# STP_local_discharge_river <- as.numeric(STP_table[, use_columns_local_discharge_loop]) # -> inside loop below
+		# STP_local_discharge_river <- as.numeric(STP_table[, use_columns_local_discharge_loop]) # -> inside and after loop below
 		STP_amount_people_local <- STP_table$angeschlossene_Einwohner_Abgabeliste2021
 		
 		# check: Umleitung affects any ARA_Nr_nach_See?
@@ -216,9 +217,9 @@ wrap_vsa <- function(
 			stop(paste0("STP_table is missing these columns: ", these_missing))
 		}
 		
-		STP_local_discharge_river <- as.numeric(STP_table[, use_columns_local_discharge_loop])
-		#STP_local_discharge_river[STP_local_discharge_river < 0 | is.na(STP_local_discharge_river)] <- 
-		#	mean(STP_local_discharge_river[STP_local_discharge_river > 0 & !is.na(STP_local_discharge_river)])
+		STP_local_discharge_river_loop <- as.numeric(STP_table[, use_columns_local_discharge_loop])
+		#STP_local_discharge_river_loop[STP_local_discharge_river_loop < 0 | is.na(STP_local_discharge_river_loop)] <- 
+		#	mean(STP_local_discharge_river_loop[STP_local_discharge_river_loop > 0 & !is.na(STP_local_discharge_river_loop)])
 		
 		
 		###########################################
@@ -264,8 +265,8 @@ wrap_vsa <- function(
 		###########################################
 		# concentration ###########################
 		result_table <- cbind(result_table, 
-			"conc_local_ug_L" =  (result_table$load_local / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river, 			# ng / L  , load: g/d  discharge: Q347_L_s_kleinster
-			"conc_cumulated_ug_L" = (result_table$load_cumulated / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river
+			"conc_local_ug_L" =  (result_table$load_local / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river_loop, 			# ng / L  , load: g/d  discharge: Q347_L_s_kleinster
+			"conc_cumulated_ug_L" = (result_table$load_cumulated / (24 * 60 * 60)) * 1E6 / STP_local_discharge_river_loop
 		)
 		###########################################		
 		store_results[[n]] <- result_table
@@ -294,6 +295,8 @@ wrap_vsa <- function(
 	sewage_discharge_local <- STP_amount_people_local * STP_discharge_per_capita / 24 / 60 / 60 				# convert to [l/s]
 	STP_amount_people_cumulated <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local)
 	sewage_discharge_cumulated <- STP_amount_people_cumulated * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]
+	
+	STP_local_discharge_river <- as.numeric(STP_table[, use_columns_local_discharge_for_fractions])
 	
 	Discharge_ratio_river_to_STP_local <- STP_local_discharge_river / sewage_discharge_local
 	Discharge_ratio_river_to_STP_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated
