@@ -32,7 +32,7 @@ run_daily_load <- function( # one function run per compound
 	
 	if(!is.data.frame(compound_elimination_STP) & is.vector(compound_elimination_STP)) stop("Problem in wrap_vsa, argument compound_elimination_STP is not a dataframe.")
 	if(any(!sapply(compound_elimination_STP, is.numeric))) stop("Problem in wrap_vsa, dataframe compound_elimination_STP has non-numeric entries.")
-	STP_steps <- c("Nitrifikation", "Denitrifikation", "P_Elimination", "GAK", "Kombi", "Ozonung", "PAK", "Ausbau")
+	STP_steps <- c("CSB_Abbau", "Nitrifikation", "Denitrifikation", "P_Elimination", "GAK", "Kombi", "Ozonung", "PAK", "Ausbau")
 	not_found <- !(STP_steps %in% names(compound_elimination_STP))
 	if(any(not_found)) stop("Problem in wrap_vsa, argument compound_elimination_STP: entry ", compound_elimination_STP[not_found], " is missing.")
 	if(any((compound_elimination_STP < 0) & (compound_elimination_STP > 1))) stop("Problem in run_daily_load: compound_elimination_STP not within [0,1]")
@@ -58,6 +58,7 @@ run_daily_load <- function( # one function run per compound
 		for(i in 1:nrow(STP_treatment_steps)){
 		
 			compound_elimination_STP_calc[i] <- prod(1 - c(
+				compound_elimination_STP$CSB_Abbau,
 				compound_elimination_STP[
 					c("Nitrifikation", "Denitrifikation", "P_Elimination")
 				][STP_treatment_steps[i, c("Nitrifikation", "Denitrifikation", "P_Elimination")] == "Ja"],
@@ -73,6 +74,7 @@ run_daily_load <- function( # one function run per compound
 		
 	}
 	if(!(length(compound_elimination_STP_calc) %in% c(1, length(STP_id)))) stop("Problem in run_daily_load: invalid length for compound_elimination_STP_calc.")
+	
 	load_local_g_d <- STP_amount_inhabitants * compound_load_gramm_per_capita_and_day * compound_excreted * compound_elimination_STP_calc
 	load_local_g_d <- load_local_g_d + STP_amount_hospital_beds * compound_load_per_hospital_bed_and_day * compound_excreted * compound_elimination_STP_calc
 	

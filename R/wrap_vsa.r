@@ -511,21 +511,29 @@ wrap_vsa <- function(
 		result_table[3, 13] <- paste(compound_elimination_STP$PAK, collapse = ", ")
 		result_table[2, 14] <- "Ausbau:"
 		result_table[3, 14] <- paste(compound_elimination_STP$Ausbau, collapse = ", ")
+		result_table[2, 15] <- "CSB_Abbau"
+		result_table[3, 15] <- paste(compound_elimination_STP$CSB_Abbau, collapse = ", ")		
 		
-		result_table[1, 16] <- "Parameter" 		
-		result_table[2, 16] <- "Umleitung aktiv?"
-		result_table[3, 16] <- as.character(STP_reroute)
+		result_table[1, 17] <- "Parameter" 		
+		result_table[2, 17] <- "Umleitung aktiv?"
+		result_table[3, 17] <- as.character(STP_reroute)
 		
-		result_table[2, 17] <- "Filterung treatment steps?"
-		result_table[3, 17] <- as.character(STP_filter_steps)
+		result_table[2, 18] <- "Filterung treatment steps?"
+		result_table[3, 18] <- as.character(STP_filter_steps)
 		
-		result_table[2, 18] <- "Elimination Seen aktiv?"
-		result_table[3, 18] <- paste(with_lake_elimination, collapse = ", ")	
+		result_table[2, 19] <- "Elimination Seen aktiv?"
+		result_table[3, 19] <- paste(with_lake_elimination, collapse = ", ")	
 		
-		result_table[2, 19] <- "Eliminationsraten See"
-		result_table[3, 19] <- paste(lake_eliminination_rates, collapse = ", ")			
+		result_table[2, 20] <- "Eliminationsraten See"
+		result_table[3, 20] <- paste(lake_eliminination_rates, collapse = ", ")			
 		
+		result_table[2, 21] <- "use_columns_local_discharge"		
+		result_table[3, 21] <- paste(use_columns_local_discharge, collapse = ", ")	
 		
+		result_table[2, 22] <- "use_columns_local_discharge_for_fractions"		
+		result_table[3, 22] <- paste(use_columns_local_discharge_for_fractions, collapse = ", ")			
+		
+
 		if(write_csv){
 		
 			done_write <- try({
