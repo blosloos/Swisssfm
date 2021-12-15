@@ -58,7 +58,7 @@ run_daily_load <- function( # one function run per compound
 		for(i in 1:nrow(STP_treatment_steps)){
 		
 			compound_elimination_STP_calc[i] <- prod(1 - c(				
-				if(compound_elimination_STP["Nitrifikation"] == "Ja") compound_elimination_STP$Nitrifikation else compound_elimination_STP$CSB_Abbau,
+				if(compound_elimination_STP$Nitrifikation == "Ja") compound_elimination_STP$Nitrifikation else compound_elimination_STP$CSB_Abbau,
 				compound_elimination_STP[ # Denitrifikation should only be available if there is a prior Nitrifikation, too
 					c("Denitrifikation", "P_Elimination")
 				][STP_treatment_steps[i, c("Denitrifikation", "P_Elimination")] == "Ja"],
