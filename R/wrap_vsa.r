@@ -359,7 +359,6 @@ wrap_vsa <- function(
 	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
 	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
 	Fraction_of_wastewater_advanced_treatment <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
-	Discharge_ratio_river_to_STP_without_advanced_treatment_of_river_cumulated <- STP_local_discharge_river / sewage_discharge_cumulated_classed
 	
 	# Sonstige
 	STP_amount_people_local_classed <- STP_amount_people_local
@@ -367,6 +366,24 @@ wrap_vsa <- function(
 	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
 	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
 	Fraction_Sonstige <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	
+	# keine MV_Behandlung
+	STP_amount_people_local_classed <- STP_amount_people_local
+	STP_amount_people_local_classed[classed == "MV_Behandlung"] <- 0
+	STP_amount_people_cumulated_classed <- apply(topo_matrix, MARGIN = 2, function(x, y){sum(x * y, na.rm = TRUE)}, y = STP_amount_people_local_classed)
+	sewage_discharge_cumulated_classed <- STP_amount_people_cumulated_classed * STP_discharge_per_capita / 24 / 60 / 60 	# convert to [l/s]	
+
+	Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated <- round(sewage_discharge_cumulated_classed / sewage_discharge_cumulated, digits = 3)
+	
+	Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated_2 <- (1 - Fraction_of_wastewater_advanced_treatment) * Fraction_STP_discharge_of_river_cumulated
+	
+	
+	if(
+		Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated !=
+		Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated_2
+	) stop("\nCONFLICT")
+	
+	Discharge_ratio_river_to_STP_without_advanced_treatment_of_river_cumulated <- round(STP_local_discharge_river / sewage_discharge_cumulated_classed, digits = 3)	
 	
 	#STP_treatment_steps[is.na(classed), ]
 	#STP_id[is.na(classed)]
@@ -386,7 +403,6 @@ wrap_vsa <- function(
 		"Fraction_of_wastewater_advanced_treatment" = Fraction_of_wastewater_advanced_treatment
 	)
 	
-	Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated <- (1 - Fraction_of_wastewater_advanced_treatment) * Fraction_STP_discharge_of_river_cumulated
 	Fraction_of_river_only_C_removal <- Fraction_of_wastewater_only_C_removal * Fraction_STP_discharge_of_river_cumulated
 	Fraction_of_river_nitrification <- Fraction_of_wastewater_nitrification * Fraction_STP_discharge_of_river_cumulated
 	Fraction_of_river_denitrification <-  Fraction_of_wastewater_denitrification * Fraction_STP_discharge_of_river_cumulated
