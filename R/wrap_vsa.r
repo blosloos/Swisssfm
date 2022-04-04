@@ -379,8 +379,8 @@ wrap_vsa <- function(
 	
 	
 	if(
-		Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated !=
-		Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated_2
+		any(Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated !=
+		Fraction_STP_discharge_without_advanced_treatment_of_river_cumulated_2)
 	) stop("\nCONFLICT")
 	
 	Discharge_ratio_river_to_STP_without_advanced_treatment_of_river_cumulated <- round(STP_local_discharge_river / sewage_discharge_cumulated_classed, digits = 3)	
