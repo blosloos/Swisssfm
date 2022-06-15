@@ -48,6 +48,11 @@ run_daily_load <- function( # one function run per compound
 	if(!is.numeric(compound_load_total) & !is.numeric(compound_load_gramm_per_capita_and_day)) stop("Problem in run_daily_load: either compound_load_total or compound_load_gramm_per_capita_and_day must be defined.")
 	topo_matrix[topo_matrix != 0] <- 1 	# in case topo_matrix contains STP id
 
+	that_not <- which(!(ARANEXTNR[!is.na(ARANEXTNR)] %in% STP_id))
+	if(length(that_not)) stop(paste0("Invalid ARANEXTNR entry detected: ", paste(ARANEXTNR[!is.na(ARANEXTNR)][that_not], collapse = ", ")))
+
+	if(any(is.na(STP_amount_inhabitants))) stop("Problem in run_daily_load: STP_amount_inhabitants contains NAs")
+
 	###############################################
 	if(!is.numeric(compound_load_gramm_per_capita_and_day)) compound_load_gramm_per_capita_and_day <- compound_load_total * (1 - STP_fraction_hospital) * 1000 / inhabitants_total / 365 		# [kg/a] -> [g/d]
 	if(!is.numeric(compound_load_per_hospital_bed_and_day)) compound_load_per_hospital_bed_and_day <- compound_load_total * (STP_fraction_hospital) * 1000 / hospital_beds_total / 365 			# [kg/a] -> [g/d]
